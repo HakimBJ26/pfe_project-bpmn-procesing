@@ -9,8 +9,11 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.HttpFirewall;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -23,25 +26,41 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf().disable()
-                .authorizeRequests()
-                .antMatchers("/engine-rest/**").permitAll()
-                .anyRequest().permitAll()
+        return http
+                .cors().and()
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .formLogin().disable()
-                .httpBasic().disable()
+                .authorizeRequests()
+                .antMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
+    public HttpFirewall allowUrlEncodedSlashHttpFirewall() {
+        StrictHttpFirewall firewall = new StrictHttpFirewall();
+        firewall.setAllowUrlEncodedSlash(true);
+        firewall.setAllowSemicolon(true);
+        firewall.setAllowUrlEncodedPercent(true);
+        firewall.setAllowBackSlash(true);
+        firewall.setAllowUrlEncodedPeriod(true);
+        return firewall;
+    }
+
+    @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers(
+        return (web) -> {
+            web.httpFirewall(allowUrlEncodedSlashHttpFirewall());
+            web.ignoring().antMatchers(
                 "/swagger-resources/**",
                 "/swagger-ui.html/**",
                 "/swagger-resources/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**");
+        };
     }
 
     @Bean
@@ -50,9 +69,11 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedMethods("*");
+                        .allowedOrigins("*")
+                        .allowedMethods("*")
+                        .allowedHeaders("*")
+                        .exposedHeaders("Authorization");
             }
         };
     }
-
 }

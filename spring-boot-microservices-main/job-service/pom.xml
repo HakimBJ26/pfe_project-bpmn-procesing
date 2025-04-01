@@ -65,6 +65,12 @@
             <artifactId>spring-cloud-starter-config</artifactId>
         </dependency>
 
+        <dependency>
+    <groupId>com.vladmihalcea</groupId>
+    <artifactId>hibernate-types-52</artifactId>
+    <version>2.16.2</version>
+</dependency>
+
         <!-- Kafka -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
@@ -115,6 +121,11 @@
             <version>0.11.5</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.16.2</version>
+        </dependency>
 
         <dependency>
             <groupId>org.camunda.bpm.springboot</groupId>
@@ -144,6 +155,14 @@
             <version>7.19.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
 
         <!-- Tests -->
         <dependency>

@@ -1,6 +1,7 @@
 package com.safalifter.jobservice.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.safalifter.jobservice.exc.GenericErrorResponse;
 import feign.Response;
 import feign.codec.ErrorDecoder;
@@ -19,7 +20,8 @@ public class CustomErrorDecoder implements ErrorDecoder {
     public Exception decode(String methodKey, Response response) {
         try (InputStream body = response.body().asInputStream()) {
             Map<String, String> errors =
-                    mapper.readValue(IOUtils.toString(body, StandardCharsets.UTF_8), Map.class);
+                    mapper.readValue(IOUtils.toString(body, StandardCharsets.UTF_8), 
+                            new TypeReference<Map<String, String>>() {});
             return GenericErrorResponse
                     .builder()
                     .httpStatus(HttpStatus.valueOf(response.status()))

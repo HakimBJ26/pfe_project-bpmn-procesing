@@ -5,17 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskDto {
-    private String id;
+public class ProcessCreateRequest {
+    
     private String name;
-    private String processInstanceId;
-    private String processDefinitionId;
-    private String taskDefinitionKey;
-    private Date created;
+    private String description;
+    private String category;
 }
