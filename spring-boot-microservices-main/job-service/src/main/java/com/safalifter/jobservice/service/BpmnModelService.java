@@ -52,6 +52,7 @@ public class BpmnModelService {
     private final GatewayConfigRepository gatewayConfigRepository;
     private final RepositoryService repositoryService;
     private final RuntimeService runtimeService;
+    private final BpmnXmlHelper bpmnXmlHelper;
 
     /**
      * Crée un modèle BPMN vide avec un processus de base
@@ -65,59 +66,65 @@ public class BpmnModelService {
         // Nettoyer le nom pour avoir un ID valide
         String cleanProcessName = processName.replaceAll("[^a-zA-Z0-9]", "_").toLowerCase();
         
-        // Créer un modèle vide
-        BpmnModelInstance modelInstance = Bpmn.createEmptyModel();
-        
-        // Créer l'élément Definitions (racine du modèle BPMN)
-        Definitions definitions = modelInstance.newInstance(Definitions.class);
-        modelInstance.setDefinitions(definitions);
-        definitions.setId("Definitions_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
-        
-        // Ajouter les attributs standards (pas les namespaces XML, qui seront ajoutés automatiquement)
-        BpmnXmlHelper.addRequiredNamespaces(definitions);
-        
-        // Créer un processus vide
-        Process process = modelInstance.newInstance(Process.class);
-        definitions.addChildElement(process);
-        
-        // Configurer le processus
-        String processId = cleanProcessName + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        process.setId(processId);
-        process.setName(processName);
-        process.setExecutable(true);
-        
-        // Définir la clé du processus pour Camunda
-        BpmnXmlHelper.setProcessKey(process, processId);
-        
-        // Créer un événement de début
-        StartEvent startEvent = modelInstance.newInstance(StartEvent.class);
-        process.addChildElement(startEvent);
-        String startEventId = "StartEvent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        startEvent.setId(startEventId);
-        startEvent.setName("Début");
-        
-        // Créer un événement de fin
-        EndEvent endEvent = modelInstance.newInstance(EndEvent.class);
-        process.addChildElement(endEvent);
-        String endEventId = "EndEvent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        endEvent.setId(endEventId);
-        endEvent.setName("Fin");
-        
-        // Relier les événements de début et de fin
-        SequenceFlow flow = modelInstance.newInstance(SequenceFlow.class);
-        process.addChildElement(flow);
-        flow.setId("Flow_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
-        flow.setSource(startEvent);
-        flow.setTarget(endEvent);
-        
-        // Normaliser les namespaces en convertissant en XML puis en rechargeant
-        // Cela garantit que tous les namespaces nécessaires sont correctement ajoutés
-        BpmnModelInstance normalizedModel = BpmnXmlHelper.normalizeNamespaces(modelInstance);
-        
-        // Ajouter des éléments de diagramme BPMN pour permettre l'affichage graphique
-        addBpmnDiagram(normalizedModel, process, startEvent, endEvent, flow);
-        
-        return normalizedModel;
+        try {
+            // Créer un modèle vide
+            BpmnModelInstance modelInstance = Bpmn.createEmptyModel();
+            
+            // Créer l'élément Definitions (racine du modèle BPMN)
+            Definitions definitions = modelInstance.newInstance(Definitions.class);
+            modelInstance.setDefinitions(definitions);
+            definitions.setId("Definitions_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
+            
+            // Ajouter les attributs standards (pas les namespaces XML, qui seront ajoutés automatiquement)
+            bpmnXmlHelper.addRequiredNamespaces(definitions);
+            
+            // Créer un processus vide
+            Process process = modelInstance.newInstance(Process.class);
+            definitions.addChildElement(process);
+            
+            // Configurer le processus
+            String processId = cleanProcessName + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            process.setId(processId);
+            process.setName(processName);
+            process.setExecutable(true);
+            
+            // Définir la clé du processus pour Camunda
+            bpmnXmlHelper.setProcessKey(process, processId);
+            
+            // Créer un événement de début
+            StartEvent startEvent = modelInstance.newInstance(StartEvent.class);
+            process.addChildElement(startEvent);
+            String startEventId = "StartEvent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            startEvent.setId(startEventId);
+            startEvent.setName("Début");
+            
+            // Créer un événement de fin
+            EndEvent endEvent = modelInstance.newInstance(EndEvent.class);
+            process.addChildElement(endEvent);
+            String endEventId = "EndEvent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            endEvent.setId(endEventId);
+            endEvent.setName("Fin");
+            
+            // Relier les événements de début et de fin
+            SequenceFlow flow = modelInstance.newInstance(SequenceFlow.class);
+            process.addChildElement(flow);
+            flow.setId("Flow_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
+            flow.setSource(startEvent);
+            flow.setTarget(endEvent);
+            
+            // Ajouter des éléments de diagramme BPMN pour permettre l'affichage graphique
+            addBpmnDiagram(modelInstance, process, startEvent, endEvent, flow);
+            
+            // Normaliser les namespaces en dernier
+            // Conversion en XML puis reconversion en modèle pour garantir des namespaces corrects
+            String xml = Bpmn.convertToString(modelInstance);
+            xml = bpmnXmlHelper.fixCommonXmlIssues(xml);
+            
+            return Bpmn.readModelFromStream(new ByteArrayInputStream(xml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            log.error("Erreur lors de la création du modèle BPMN vide: {}", e.getMessage(), e);
+            throw new RuntimeException("Erreur lors de la création du modèle BPMN: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -145,10 +152,13 @@ public class BpmnModelService {
             // Définir l'attribut isExecutable
             process.setExecutable(true);
             
-            // Exporter le modèle en XML
+            // Exporter le modèle en XML avec encodage UTF-8 explicite
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             Bpmn.writeModelToStream(outputStream, modelInstance);
-            String bpmnXml = outputStream.toString();
+            String bpmnXml = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+            
+            // Corriger les problèmes XML connus
+            bpmnXml = bpmnXmlHelper.fixCommonXmlIssues(bpmnXml);
             
             log.info("XML généré pour le processus: {}, taille: {} caractères", processId, bpmnXml.length());
             
@@ -156,7 +166,7 @@ public class BpmnModelService {
             BpmnProcess bpmnProcess = null;
             
             // Chercher le processus par clé si disponible
-            String processKey = BpmnXmlHelper.getProcessKey(process);
+            String processKey = bpmnXmlHelper.getProcessKey(process);
             
             // Vérifier également attribut id comme solution de secours
             if (processKey == null || processKey.trim().isEmpty()) {
@@ -168,7 +178,7 @@ public class BpmnModelService {
                 processKey = "process_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
                 try {
                     // Utiliser notre méthode setProcessKey qui gère correctement le namespace
-                    BpmnXmlHelper.setProcessKey(process, processKey);
+                    bpmnXmlHelper.setProcessKey(process, processKey);
                     log.info("Attribut processKey défini avec succès: {}", processKey);
                 } catch (Exception e) {
                     log.error("Erreur lors de la définition de l'attribut processKey: {}", e.getMessage());
@@ -190,7 +200,7 @@ public class BpmnModelService {
                     processKey = "process_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
                     try {
                         // Utiliser notre méthode setProcessKey qui gère correctement le namespace
-                        BpmnXmlHelper.setProcessKey(process, processKey);
+                        bpmnXmlHelper.setProcessKey(process, processKey);
                         log.info("Attribut processKey défini avec succès: {}", processKey);
                     } catch (Exception e) {
                         log.error("Erreur lors de la définition de l'attribut processKey: {}", e.getMessage());
@@ -223,10 +233,10 @@ public class BpmnModelService {
             BpmnProcess savedProcess = bpmnProcessRepository.save(bpmnProcess);
             
             try {
-                // Déployer le processus
+                // Déployer le processus en utilisant le XML corrigé plutôt que le modelInstance
                 log.info("Déploiement du processus dans Camunda");
                 Deployment deployment = repositoryService.createDeployment()
-                        .addModelInstance(processId + ".bpmn", modelInstance)
+                        .addString(processId + ".bpmn", bpmnXml)
                         .name(name)
                         .source("bpmn-designer")
                         .deploy();
@@ -341,6 +351,9 @@ public class BpmnModelService {
                 throw new IllegalArgumentException("Le XML BPMN est vide ou nul");
             }
             
+            // Corriger les problèmes d'encodage et de caractères invalides
+            bpmnXml = bpmnXmlHelper.fixCommonXmlIssues(bpmnXml);
+            
             // Vérifier la présence d'éléments de base BPMN
             if (!bpmnXml.contains("<bpmn:") && !bpmnXml.contains("<bpmn2:") && !bpmnXml.contains("<semantic:")) {
                 log.warn("Le XML ne semble pas contenir d'éléments BPMN standard, tentative de correction");
@@ -356,13 +369,13 @@ public class BpmnModelService {
             
             log.debug("XML à charger: {}", bpmnXml);
             
-            // Charger le modèle
-            return Bpmn.readModelFromStream(new ByteArrayInputStream(bpmnXml.getBytes()));
+            // Charger le modèle avec l'encodage UTF-8 explicitement spécifié
+            return Bpmn.readModelFromStream(new ByteArrayInputStream(bpmnXml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
         } catch (Exception e) {
             log.error("Erreur lors du chargement du modèle BPMN", e);
             // En cas d'erreur, créer un modèle par défaut
             log.info("Création d'un modèle BPMN par défaut en raison de l'erreur");
-            return Bpmn.readModelFromStream(new ByteArrayInputStream(getDefaultBpmnXml().getBytes()));
+            return Bpmn.readModelFromStream(new ByteArrayInputStream(getDefaultBpmnXml().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
         }
     }
     

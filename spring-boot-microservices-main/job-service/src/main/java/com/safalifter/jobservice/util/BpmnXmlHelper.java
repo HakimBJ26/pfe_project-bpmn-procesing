@@ -6,14 +6,19 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.xml.instance.DomElement;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
+import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Classe utilitaire pour la manipulation des éléments XML BPMN
  * Gère les namespaces et attributs avec namespace
  */
 @Slf4j
+@Component
 public class BpmnXmlHelper {
 
     /**
@@ -157,10 +162,128 @@ public class BpmnXmlHelper {
             String xml = Bpmn.convertToString(modelInstance);
             
             // Reconvertir le XML en modèle - Camunda ajoutera automatiquement tous les namespaces nécessaires
-            return Bpmn.readModelFromStream(new ByteArrayInputStream(xml.getBytes()));
+            return Bpmn.readModelFromStream(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             log.error("Erreur lors de la normalisation des namespaces: {}", e.getMessage(), e);
             return modelInstance; // En cas d'erreur, retourner le modèle d'origine
         }
+    }
+    
+    /**
+     * Corrige les problèmes courants dans les XML BPMN
+     * - Caractères non-UTF8
+     * - Caractères de contrôle invalides
+     * - Balises XML mal formées
+     * - Problèmes d'encodage
+     * - Namespaces manquants ou incorrects
+     * 
+     * @param xml Le XML à corriger
+     * @return Le XML corrigé
+     */
+    public String fixCommonXmlIssues(String xml) {
+        if (xml == null || xml.isEmpty()) {
+            log.error("XML vide ou null, impossible de corriger");
+            return xml;
+        }
+        
+        log.info("Correction du XML BPMN, taille initiale: {} caractères", xml.length());
+        
+        try {
+            // 1. S'assurer que l'encodage est UTF-8
+            byte[] bytes = xml.getBytes(StandardCharsets.UTF_8);
+            xml = new String(bytes, StandardCharsets.UTF_8);
+            
+            // 2. Supprimer les caractères de contrôle invalides (non imprimables)
+            StringBuilder sb = new StringBuilder(xml.length());
+            for (int i = 0; i < xml.length(); i++) {
+                char c = xml.charAt(i);
+                // Ne garder que les caractères valides pour XML 1.0
+                // https://www.w3.org/TR/xml/#charsets
+                if (c == 0x9 || c == 0xA || c == 0xD || 
+                    (c >= 0x20 && c <= 0xD7FF) || 
+                    (c >= 0xE000 && c <= 0xFFFD) || 
+                    (c >= 0x10000 && c <= 0x10FFFF)) {
+                    sb.append(c);
+                } else {
+                    log.debug("Caractère invalide supprimé à la position {}: {}", i, (int)c);
+                }
+            }
+            xml = sb.toString();
+            
+            // 3. Vérifier les déclarations d'encodage et les corriger si nécessaires
+            Pattern encodingPattern = Pattern.compile("encoding=[\"']([^\"']*)[\"']");
+            Matcher encodingMatcher = encodingPattern.matcher(xml);
+            if (encodingMatcher.find()) {
+                String encoding = encodingMatcher.group(1);
+                if (!encoding.equalsIgnoreCase("UTF-8")) {
+                    log.warn("Encodage déclaré non-UTF8 trouvé: {}, correction en UTF-8", encoding);
+                    xml = xml.replace(encoding, "UTF-8");
+                }
+            }
+            
+            // 4. S'assurer que les namespaces BPMN essentiels sont présents
+            if (!xml.contains("xmlns:bpmn") && !xml.contains("xmlns=\"http://www.omg.org/spec/BPMN")) {
+                log.warn("Namespaces BPMN manquants, ajout des namespaces standards");
+                
+                // Rechercher la balise de définitions pour ajouter les namespaces
+                Pattern definitionsPattern = Pattern.compile("<(?:bpmn:)?definitions[^>]*>");
+                Matcher definitionsMatcher = definitionsPattern.matcher(xml);
+                
+                if (definitionsMatcher.find()) {
+                    String definitionsTag = definitionsMatcher.group(0);
+                    String newDefinitionsTag = definitionsTag;
+                    
+                    // Ajouter les namespaces manquants si non présents
+                    if (!definitionsTag.contains("xmlns")) {
+                        newDefinitionsTag = definitionsTag.replace(">", 
+                            " xmlns=\"http://www.omg.org/spec/BPMN/20100524/MODEL\"" +
+                            " xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\"" +
+                            " xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\"" +
+                            " xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\"" +
+                            " xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\"" +
+                            " xmlns:camunda=\"http://camunda.org/schema/1.0/bpmn\">");
+                    }
+                    
+                    xml = xml.replace(definitionsTag, newDefinitionsTag);
+                } else {
+                    log.warn("Balise definitions non trouvée, impossible d'ajouter les namespaces automatiquement");
+                }
+            }
+            
+            // 5. Vérifier que le XML est bien formé (balises fermées)
+            int openingTags = countOccurrences(xml, "<");
+            int closingTags = countOccurrences(xml, "</") + countOccurrences(xml, "/>");
+            
+            if (openingTags - closingTags > 0) {
+                log.warn("Possible problème de balises non fermées: {} ouvertures, {} fermetures", 
+                         openingTags, closingTags);
+            }
+            
+            log.info("XML corrigé avec succès, nouvelle taille: {} caractères", xml.length());
+            return xml;
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la correction du XML: {}", e.getMessage(), e);
+            // En cas d'erreur, retourner le XML d'origine
+            return xml;
+        }
+    }
+    
+    /**
+     * Compte le nombre d'occurrences d'une sous-chaîne dans une chaîne
+     */
+    private int countOccurrences(String str, String subStr) {
+        int count = 0;
+        int lastIndex = 0;
+        
+        while (lastIndex != -1) {
+            lastIndex = str.indexOf(subStr, lastIndex);
+            if (lastIndex != -1) {
+                count++;
+                lastIndex += subStr.length();
+            }
+        }
+        
+        return count;
     }
 }
