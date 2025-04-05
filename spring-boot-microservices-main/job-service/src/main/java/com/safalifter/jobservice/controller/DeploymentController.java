@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -83,6 +85,35 @@ public class DeploymentController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Échec du démarrage: " + e.getMessage()
+            ));
+        }
+    }
+    
+    @GetMapping("/definitions")
+    public ResponseEntity<?> getProcessDefinitions() {
+        try {
+            List<ProcessDefinition> definitions = repositoryService
+                .createProcessDefinitionQuery()
+                .orderByProcessDefinitionKey().asc()
+                .orderByProcessDefinitionVersion().desc()
+                .list();
+                
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (ProcessDefinition def : definitions) {
+                Map<String, Object> processInfo = new HashMap<>();
+                processInfo.put("id", def.getId());
+                processInfo.put("key", def.getKey());
+                processInfo.put("name", def.getName() != null ? def.getName() : def.getKey());
+                processInfo.put("version", def.getVersion());
+                processInfo.put("deploymentId", def.getDeploymentId());
+                processInfo.put("suspended", def.isSuspended());
+                result.add(processInfo);
+            }
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Échec de la récupération des définitions de processus: " + e.getMessage()
             ));
         }
     }

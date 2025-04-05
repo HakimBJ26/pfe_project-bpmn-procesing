@@ -17,11 +17,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 // Import des pages BPMN
 import DmnModeler from './components/bpmn/DmnModeler';
 import BpmnModeler from './components/bpmn/BpmnModeler';
+import StartProcessPage from './components/process/StartProcessPage';
+// Import des composants de gestion des tâches
+import TaskList from './components/tasks/TaskList';
+import TaskForm from './components/tasks/TaskForm';
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
-
-
-
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -60,8 +61,14 @@ function App() {
 
                 {/* Routes BPMN */}
 
-
-
+                <Route
+                  path="/process/start"
+                  element={
+                    <ProtectedRoute roles={['ROLE_USER', 'ROLE_ADMIN']}>
+                      <StartProcessPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 <Route
                   path="/dmn-modeler"
@@ -81,12 +88,33 @@ function App() {
                   }
                 />
 
-               
-
+                {/* Routes de gestion des tâches */}
+                <Route
+                  path="/tasks"
+                  element={
+                    <ProtectedRoute roles={['ROLE_USER', 'ROLE_ADMIN']}>
+                      <TaskList />
+                    </ProtectedRoute>
+                  }
+                />
                 
-
+                <Route
+                  path="/tasks/:taskId"
+                  element={
+                    <ProtectedRoute roles={['ROLE_USER', 'ROLE_ADMIN']}>
+                      <TaskForm />
+                    </ProtectedRoute>
+                  }
+                />
                 
-
+                <Route
+                  path="/tasks/:taskId/complete"
+                  element={
+                    <ProtectedRoute roles={['ROLE_USER', 'ROLE_ADMIN']}>
+                      <TaskForm />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Routes Utilisateur */}
                 <Route

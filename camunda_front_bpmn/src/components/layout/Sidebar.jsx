@@ -28,7 +28,8 @@ import {
   ExpandMore,
   TableChart,
   List as ListIcon,
-  History
+  History,
+  Assignment
 } from '@mui/icons-material';
 import { useState } from 'react';
 
@@ -46,16 +47,17 @@ const Sidebar = ({ open }) => {
     { to: '/admin', label: 'Dashboard', icon: <Dashboard /> },
     { to: '/admin/users', label: 'User Management', icon: <People /> },
     { to: 'bpmn-modeler', label: 'Designer', icon: <TableChart /> },
+    { to: '/process/start', label: 'Démarrer un processus', icon: <PlayArrow /> },
+    { to: '/tasks', label: 'Mes tâches', icon: <Assignment /> },
     { to: '/processes', label: 'Process', icon: <TableChart /> },
     { to: '/run/:processId', label: 'run', icon: <TableChart /> },
     { to: '/dmn-modeler', label: 'DMN Manager', icon: <TableChart /> }
-
-
   ];
 
   const userLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: <Dashboard /> },
-    
+    { to: '/process/start', label: 'Démarrer un processus', icon: <PlayArrow /> },
+    { to: '/tasks', label: 'Mes tâches', icon: <Assignment /> },
   ];
 
   const links = user?.role === 'ROLE_ADMIN' ? adminLinks : userLinks;

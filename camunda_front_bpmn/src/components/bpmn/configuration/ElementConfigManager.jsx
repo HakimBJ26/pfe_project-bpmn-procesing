@@ -44,18 +44,20 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
+
+
   // Surveiller les changements d'élément sélectionné
   useEffect(() => {
     if (selectedElement) {
       const elementType = selectedElement.type;
-      
+
       // Récupérer les informations sur l'élément
       setElementData({
         id: selectedElement.id,
         name: selectedElement.businessObject.name || selectedElement.id,
         type: elementType
       });
-      
+
       // Déterminer le type de configuration
       if (elementType === ELEMENT_TYPES.USER_TASK) {
         setConfigType('userTask');
@@ -67,7 +69,7 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
         elementType === ELEMENT_TYPES.PARALLEL_GATEWAY
       ) {
         setConfigType('gateway');
-        
+
         // Récupérer les flux sortants pour les gateways
         const outgoing = selectedElement.outgoing || [];
         const flows = outgoing.map(flow => {
@@ -83,7 +85,7 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
       } else {
         setConfigType(null);
       }
-      
+
       // Si l'affichage direct est activé, ouvrir automatiquement la configuration
       if (directDisplay) {
         setShowConfig(true);
@@ -106,7 +108,7 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
     if (onConfigSaved) {
       onConfigSaved(configData);
     }
-    
+
     setSuccess(`Configuration de l'élément ${elementData.name} enregistrée avec succès`);
     // Actualiser la représentation visuelle de l'élément si nécessaire
     updateElementVisualCues(elementData.id);
@@ -115,13 +117,13 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
   // Mettre à jour les indices visuels sur le diagramme
   const updateElementVisualCues = (elementId) => {
     if (!modeler) return;
-    
+
     const elementRegistry = modeler.get('elementRegistry');
     const modeling = modeler.get('modeling');
     const element = elementRegistry.get(elementId);
-    
+
     if (!element) return;
-    
+
     // Ajouter des indicateurs visuels pour montrer que l'élément est configuré
     // Par exemple, changer la couleur ou ajouter une icône
     try {
@@ -131,7 +133,7 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
         serviceTask: { stroke: '#388e3c', fill: '#c8e6c9' },
         gateway: { stroke: '#f57c00', fill: '#ffe0b2' }
       };
-      
+
       if (configType && colors[configType]) {
         modeling.setColor(element, {
           stroke: colors[configType].stroke,
@@ -151,7 +153,7 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
   if (directDisplay) {
     console.log('Rendering direct display configuration for:', configType);
     console.log('Element data:', elementData);
-    
+
     return (
       <>
         {loading && (
@@ -159,10 +161,10 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
             <CircularProgress color="primary" />
           </Backdrop>
         )}
-        
-        <Snackbar 
-          open={!!error} 
-          autoHideDuration={6000} 
+
+        <Snackbar
+          open={!!error}
+          autoHideDuration={6000}
           onClose={() => setError('')}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
@@ -170,10 +172,10 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
             {error}
           </Alert>
         </Snackbar>
-        
-        <Snackbar 
-          open={!!success} 
-          autoHideDuration={6000} 
+
+        <Snackbar
+          open={!!success}
+          autoHideDuration={6000}
           onClose={() => setSuccess('')}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
@@ -181,12 +183,12 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
             {success}
           </Alert>
         </Snackbar>
-        
+
         <Box sx={{ width: '100%' }}>
           {configType === 'userTask' && (
-            <UserTaskConfig 
-              open={true}
-              onClose={() => {}}
+            <UserTaskConfig
+              open={showConfig}
+              onClose={handleCloseConfig}
               task={{
                 id: elementData.id,
                 name: elementData.name,
@@ -196,11 +198,11 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
               onSave={handleConfigSaved}
             />
           )}
-          
+
           {configType === 'serviceTask' && (
             <ServiceTaskConfig
-              open={true}
-              onClose={() => {}}
+              open={showConfig}
+              onClose={handleCloseConfig}
               task={{
                 id: elementData.id,
                 name: elementData.name,
@@ -210,11 +212,11 @@ const ElementConfigManager = ({ modeler, selectedElement, processId, onConfigSav
               onSave={handleConfigSaved}
             />
           )}
-          
+
           {configType === 'gateway' && (
             <GatewayConfig
-              open={true}
-              onClose={() => {}}
+            open={showConfig}
+            onClose={handleCloseConfig}
               gateway={{
                 id: elementData.id,
                 name: elementData.name,
