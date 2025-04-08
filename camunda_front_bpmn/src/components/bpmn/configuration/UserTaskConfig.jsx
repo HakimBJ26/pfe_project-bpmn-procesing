@@ -114,18 +114,53 @@ const UserTaskConfig = ({ open, onClose, task, processId, onSave }) => {
         ? Math.round((formData.followUpDate.getTime() - Date.now()) / 3600000)
         : null;
       
+      // Données pour la base de données
       const configData = {
         ...formData,
         dueDate: dueDateHours,
         followUpDate: followUpDateHours
       };
       
+      // Enregistrement dans la base de données
       const response = await bpmnService.configureUserTask(processId, task.id, configData);
+      
+      // Parse formDefinition pour créer les formFields pour le fichier BPMN
+      let formFields = [];
+      try {
+        const formDefinitionObj = JSON.parse(formData.formDefinition || '[]');
+        formFields = formDefinitionObj.map(field => ({
+          id: field.id || field.name.toLowerCase().replace(/\s+/g, '_'),
+          label: field.label || field.name,
+          type: field.type || 'string',
+          defaultValue: field.defaultValue || '',
+          required: !!field.required,
+          values: field.options ? field.options.map(opt => ({
+            id: opt.value,
+            name: opt.label
+          })) : []
+        }));
+      } catch (err) {
+        console.error("Erreur lors du parsing de la définition du formulaire", err);
+      }
+      
+      // Données pour le modèle BPMN
+      const bpmnConfigData = {
+        taskId: task.id,
+        name: formData.name || task.name,
+        assignee: formData.assignee,
+        candidateUsers: formData.candidateUsers,
+        candidateGroups: formData.candidateGroups,
+        formKey: formData.formKey,
+        formFields: formFields,
+        dueDate: formData.dueDate ? formData.dueDate.toISOString() : null,
+        priority: formData.priority
+      };
       
       setSuccess("Configuration enregistrée avec succès");
       
+      // Passer les données BPMN au parent pour l'application dans le modèle
       if (onSave) {
-        onSave(response.data);
+        onSave(bpmnConfigData);
       }
       
       setTimeout(() => {

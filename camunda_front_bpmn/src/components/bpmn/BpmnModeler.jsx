@@ -30,6 +30,7 @@ import {
 import authService from '../../services/authService';
 import bpmnService from '../../services/bpmnService';
 import ElementConfigManager from './configuration/ElementConfigManager';
+import camundaModdle from 'camunda-bpmn-moddle/resources/camunda.json';
 
 const BpmnModeler = () => {
     const [bpmnModeler, setBpmnModeler] = useState(null);
@@ -74,18 +75,67 @@ const BpmnModeler = () => {
     useEffect(() => {
         const modeler = new BpmnJS({
             container: containerRef.current,
-            keyboard: { bindTo: window }
+            keyboard: { bindTo: window },
+            additionalModules: [
+                // Vous pouvez ajouter des modules supplémentaires ici si nécessaire
+            ],
+            moddleExtensions: {
+                camunda: camundaModdle
+            }
         });
 
         const initializeModeler = async () => {
             try {
                 await modeler.createDiagram();
+
+                // Ajouter les namespaces Camunda aux définitions BPMN
+                const moddle = modeler.get('moddle');
+                const modeling = modeler.get('modeling');
+                const canvas = modeler.get('canvas');
+                const rootElement = canvas.getRootElement();
+
+                if (rootElement && rootElement.businessObject) {
+                    // Trouver les définitions
+                    const definitions = rootElement.businessObject.$parent;
+
+                    // Ajouter le namespace Camunda s'il n'existe pas déjà
+                    if (definitions && !definitions.$attrs['xmlns:camunda']) {
+                        modeling.updateProperties(rootElement, {
+                            '$parent': {
+                                ...definitions,
+                                '$attrs': {
+                                    ...definitions.$attrs,
+                                    'xmlns:camunda': 'http://camunda.org/schema/1.0/bpmn'
+                                }
+                            }
+                        });
+                    }
+
+                    // Rendre le processus exécutable
+                    const processElement = rootElement.businessObject;
+                    modeling.updateProperties(rootElement, {
+                        'isExecutable': true
+                    });
+
+                    // Supprimer la propriété $parent qui n'est pas valide dans le XML
+                    if (processElement.$parent && processElement.$parent.$parent) {
+                        const process = processElement.$parent.$parent.rootElements.find(
+                            el => el.$type === 'bpmn:Process'
+                        );
+                        if (process) {
+                            modeling.updateProperties(process, {
+                                'isExecutable': true
+                            });
+                        }
+                    }
+                }
+
                 setBpmnModeler(modeler);
-                
+
                 // Ajouter des écouteurs d'événements pour la sélection d'éléments
                 const eventBus = modeler.get('eventBus');
                 const selection = modeler.get('selection');
-                
+
                 eventBus.on('selection.changed', (e) => {
                     const selectedElements = selection.get();
                     console.log('Selected elements:', selectedElements);
@@ -100,7 +150,7 @@ const BpmnModeler = () => {
                         setSelectedElement(null);
                     }
                 });
-                
+
                 // Écouteur pour les modifications d'éléments
                 eventBus.on('element.changed', (e) => {
                     // Si l'élément modifié est celui actuellement sélectionné, mettre à jour
@@ -184,26 +234,26 @@ const BpmnModeler = () => {
         setLoading(true);
         setError('');
         setSuccess('');
-        
+
         try {
             const response = await bpmnService.createEmptyProcess({
                 name: processName,
                 description: '',
                 category: ''
             });
-            
+
             const newProcessId = response.data.id;
             setCurrentProcessId(newProcessId);
             setProcessKey(response.data.processKey);
             setSuccess(`Nouveau processus créé: ${response.data.name}`);
             setCreateProcessDialogOpen(false);
-            
+
             // Facultatif: charger un diagramme vide ou un template par défaut
             await bpmnModeler.createDiagram();
-            
+
         } catch (err) {
             console.error("Erreur lors de la création du processus", err);
-            setError("Erreur lors de la création du processus: " + 
+            setError("Erreur lors de la création du processus: " +
                 (err.response?.data?.error || err.message));
         } finally {
             setLoading(false);
@@ -219,18 +269,18 @@ const BpmnModeler = () => {
         setLoading(true);
         setError('');
         setSuccess('');
-        
+
         try {
             const { xml } = await bpmnModeler.saveXML({ format: true });
             setXml(xml);
-            
+
             // Appel à l'API pour sauvegarder le XML du processus
             await bpmnService.updateProcessXml(currentProcessId, { xml });
-            
+
             setSuccess('Processus sauvegardé avec succès');
         } catch (err) {
             console.error("Erreur lors de la sauvegarde", err);
-            setError("Erreur lors de la sauvegarde: " + 
+            setError("Erreur lors de la sauvegarde: " +
                 (err.response?.data?.error || err.message));
         } finally {
             setLoading(false);
@@ -245,31 +295,62 @@ const BpmnModeler = () => {
         setSuccess('');
         try {
             const { xml } = await bpmnModeler.saveXML({ format: true });
-            setXml(xml);
 
-            const blob = new Blob([xml], { type: 'application/xml' });
-            const file = new File([blob], 'process.bpmn');
+            // Plutôt que de risquer de corrompre le XML avec des expressions régulières,
+            // recréons un modèle propre
+            try {
+                // Réimporter le XML dans le modeler, ce qui forcera la normalisation
+                await bpmnModeler.importXML(xml);
 
-            const formData = new FormData();
-            formData.append('file', file);
+                // S'assurer que tous les processus sont exécutables
+                const elementRegistry = bpmnModeler.get('elementRegistry');
+                const modeling = bpmnModeler.get('modeling');
 
-            const response = await fetch('http://localhost:8997/api/process/deploy', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: formData
-            });
+                const processes = elementRegistry.filter(element =>
+                    element.businessObject && element.businessObject.$type === 'bpmn:Process'
+                );
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Erreur lors du déploiement');
+                processes.forEach(process => {
+                    modeling.updateProperties(process, {
+                        'isExecutable': true
+                    });
+                });
+
+                // Exporter à nouveau le XML propre
+                const { xml: cleanXml } = await bpmnModeler.saveXML({ format: true });
+
+                // Vérifier si des corrections sont nécessaires
+                console.log("XML avant déploiement:", cleanXml);
+
+                setXml(cleanXml);
+
+                const blob = new Blob([cleanXml], { type: 'application/xml' });
+                const file = new File([blob], 'process.bpmn');
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('http://localhost:8997/api/process/deploy', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erreur lors du déploiement');
+                }
+
+                const data = await response.json();
+                setProcessKey(data.processKey);
+                setDeploymentId(data.deploymentId);
+                setSuccess('Processus déployé avec succès');
+            } catch (err) {
+                const errorMessage = await handleApiError(err);
+                setError(errorMessage);
             }
-
-            const data = await response.json();
-            setProcessKey(data.processKey);
-            setDeploymentId(data.deploymentId);
-            setSuccess('Processus déployé avec succès');
         } catch (err) {
             const errorMessage = await handleApiError(err);
             setError(errorMessage);
@@ -299,7 +380,7 @@ const BpmnModeler = () => {
         setLoading(true);
         setError('');
         setSuccess('');
-        
+
         try {
             let parsedVariables = {};
             try {
@@ -338,8 +419,236 @@ const BpmnModeler = () => {
     };
 
     const handleElementConfigSaved = (configData) => {
-        setSuccess(`Configuration enregistrée pour l'élément ${configData.taskId || configData.gatewayId}`);
-        // Actualiser les données du processus si nécessaire
+        if (!bpmnModeler || !selectedElement) {
+            setError("Erreur : Impossible d'appliquer la configuration, aucun élément sélectionné");
+            return;
+        }
+
+        try {
+            // Obtenir les services nécessaires
+            const modeling = bpmnModeler.get('modeling');
+            const elementRegistry = bpmnModeler.get('elementRegistry');
+            const moddle = bpmnModeler.get('moddle');
+
+            // Trouver l'élément dans le registre
+            const element = elementRegistry.get(selectedElement.id);
+            if (!element) {
+                setError(`Erreur : Élément ${selectedElement.id} introuvable`);
+                return;
+            }
+
+            // Mettre à jour les propriétés de base
+            if (configData.name) {
+                modeling.updateProperties(element, {
+                    name: configData.name
+                });
+            }
+
+            const businessObject = element.businessObject;
+
+            // Pour les tâches de service (ServiceTask)
+            if (businessObject.$type === 'bpmn:ServiceTask') {
+                // Vider les extensionElements existants pour cette propriété
+                let extensionElements = businessObject.extensionElements;
+                if (!extensionElements) {
+                    extensionElements = moddle.create('bpmn:ExtensionElements');
+                    businessObject.extensionElements = extensionElements;
+                }
+
+                // Supprimer les anciennes propriétés camunda:
+                if (extensionElements.values) {
+                    extensionElements.values = extensionElements.values.filter(
+                        ext => ext.$type !== 'camunda:Properties' &&
+                            ext.$type !== 'camunda:InputOutput'
+                    );
+                } else {
+                    extensionElements.values = [];
+                }
+
+                // Mettre à jour le type d'implémentation
+                if (configData.implementationType === 'class') {
+                    // Utiliser camunda:class
+                    modeling.updateProperties(element, {
+                        'camunda:class': configData.implementation
+                    });
+                    // Supprimer les autres propriétés
+                    modeling.updateProperties(element, {
+                        'camunda:delegateExpression': undefined,
+                        'camunda:expression': undefined
+                    });
+                } else if (configData.implementationType === 'delegateExpression') {
+                    // Utiliser camunda:delegateExpression
+                    modeling.updateProperties(element, {
+                        'camunda:delegateExpression': configData.implementation
+                    });
+                    // Supprimer les autres propriétés
+                    modeling.updateProperties(element, {
+                        'camunda:class': undefined,
+                        'camunda:expression': undefined
+                    });
+                } else if (configData.implementationType === 'expression') {
+                    // Utiliser camunda:expression
+                    modeling.updateProperties(element, {
+                        'camunda:expression': configData.implementation
+                    });
+                    // Supprimer les autres propriétés
+                    modeling.updateProperties(element, {
+                        'camunda:class': undefined,
+                        'camunda:delegateExpression': undefined
+                    });
+                }
+
+                // Configurer async si spécifié
+                if (configData.async !== undefined) {
+                    modeling.updateProperties(element, {
+                        'camunda:async': configData.async
+                    });
+                }
+
+                // Ajouter les paramètres d'entrée et de sortie
+                if (configData.inputParameters && configData.inputParameters.length > 0 ||
+                    configData.outputParameters && configData.outputParameters.length > 0) {
+
+                    // Créer camunda:InputOutput
+                    const inputOutput = moddle.create('camunda:InputOutput');
+
+                    // Ajouter les paramètres d'entrée
+                    if (configData.inputParameters && configData.inputParameters.length > 0) {
+                        inputOutput.inputParameters = configData.inputParameters.map(param => {
+                            const inputParam = moddle.create('camunda:InputParameter');
+                            inputParam.name = param.name;
+                            inputParam.value = param.value;
+                            return inputParam;
+                        });
+                    }
+
+                    // Ajouter les paramètres de sortie
+                    if (configData.outputParameters && configData.outputParameters.length > 0) {
+                        inputOutput.outputParameters = configData.outputParameters.map(param => {
+                            const outputParam = moddle.create('camunda:OutputParameter');
+                            outputParam.name = param.name;
+                            outputParam.value = param.value;
+                            return outputParam;
+                        });
+                    }
+
+                    // Ajouter l'inputOutput aux extensionElements
+                    extensionElements.values.push(inputOutput);
+                }
+            }
+            // Pour les tâches utilisateur (UserTask)
+            else if (businessObject.$type === 'bpmn:UserTask') {
+                // Mettre à jour les propriétés spécifiques aux tâches utilisateur
+                const properties = {};
+
+                if (configData.assignee) {
+                    properties['camunda:assignee'] = configData.assignee;
+                }
+
+                if (configData.candidateUsers) {
+                    properties['camunda:candidateUsers'] = configData.candidateUsers;
+                }
+
+                if (configData.candidateGroups) {
+                    properties['camunda:candidateGroups'] = configData.candidateGroups;
+                }
+
+                if (configData.dueDate) {
+                    properties['camunda:dueDate'] = configData.dueDate;
+                }
+
+                if (configData.priority) {
+                    properties['camunda:priority'] = configData.priority.toString();
+                }
+
+                if (configData.formKey) {
+                    properties['camunda:formKey'] = configData.formKey;
+                }
+
+                // Appliquer les propriétés
+                modeling.updateProperties(element, properties);
+
+                // Gérer les champs de formulaire
+                if (configData.formFields && configData.formFields.length > 0) {
+                    // Obtenir ou créer les extensionElements
+                    let extensionElements = businessObject.extensionElements;
+                    if (!extensionElements) {
+                        extensionElements = moddle.create('bpmn:ExtensionElements');
+                        businessObject.extensionElements = extensionElements;
+                    }
+
+                    // Supprimer l'ancien formData s'il existe
+                    if (extensionElements.values) {
+                        extensionElements.values = extensionElements.values.filter(
+                            ext => ext.$type !== 'camunda:FormData'
+                        );
+                    } else {
+                        extensionElements.values = [];
+                    }
+
+                    // Créer un nouveau formData
+                    const formData = moddle.create('camunda:FormData');
+
+                    // Ajouter les champs de formulaire
+                    formData.fields = configData.formFields.map(field => {
+                        const formField = moddle.create('camunda:FormField');
+                        formField.id = field.id;
+                        formField.label = field.label;
+                        formField.type = field.type || 'string';
+
+                        if (field.defaultValue) {
+                            formField.defaultValue = field.defaultValue;
+                        }
+
+                        // Définir si le champ est obligatoire
+                        if (field.required) {
+                            const constraints = moddle.create('camunda:Constraints');
+                            const requiredConstraint = moddle.create('camunda:Constraint');
+                            requiredConstraint.name = 'required';
+                            requiredConstraint.config = 'true';
+                            constraints.constraints = [requiredConstraint];
+                            formField.constraints = constraints;
+                        }
+
+                        // Ajouter les options si c'est un champ de type enum
+                        if (field.values && field.values.length > 0 &&
+                            (field.type === 'enum' || field.type === 'boolean')) {
+                            formField.values = field.values.map(val => {
+                                const value = moddle.create('camunda:Value');
+                                value.id = val.id;
+                                value.name = val.name;
+                                return value;
+                            });
+                        }
+
+                        return formField;
+                    });
+
+                    // Ajouter le formData aux extensionElements
+                    extensionElements.values.push(formData);
+
+                    // Mettre à jour les extensionElements
+                    modeling.updateProperties(element, {
+                        extensionElements: extensionElements
+                    });
+                }
+            }
+
+            // L'élément a été modifié, forcer la mise à jour du modèle
+            const canvas = bpmnModeler.get('canvas');
+            const rootElement = canvas.getRootElement();
+
+            // Pas besoin d'ajouter un marqueur non standard qui cause des erreurs de validation
+            // Supprimer ce bloc qui ajoute le "modificationMarker"
+            // modeling.updateProperties(rootElement, {
+            //    'modificationMarker': Date.now().toString()
+            // });
+
+            setSuccess(`Configuration enregistrée pour l'élément ${element.id}`);
+        } catch (error) {
+            console.error('Erreur lors de l\'application de la configuration:', error);
+            setError(`Erreur lors de l'application de la configuration: ${error.message}`);
+        }
     };
 
     return (
@@ -401,7 +710,7 @@ const BpmnModeler = () => {
                     </Button>
 
                     <Button
-                        variant="contained" 
+                        variant="contained"
                         color="primary"
                         startIcon={<Save />}
                         onClick={handleSaveProcess}
@@ -443,9 +752,9 @@ const BpmnModeler = () => {
                     </Button>
 
                     {currentProcessId && (
-                        <Chip 
-                            label={`ID: ${currentProcessId}`} 
-                            variant="outlined" 
+                        <Chip
+                            label={`ID: ${currentProcessId}`}
+                            variant="outlined"
                             color="primary"
                             sx={{ ml: 'auto' }}
                         />
@@ -470,11 +779,11 @@ const BpmnModeler = () => {
                         transition: 'width 0.3s ease'
                     }}
                 />
-                
+
                 {/* Panneau de propriétés - Affichage direct */}
                 {selectedElement && (
-                    <Box sx={{ 
-                        width: '30%', 
+                    <Box sx={{
+                        width: '30%',
                         borderLeft: '1px solid #e0e0e0',
                         padding: 2,
                         overflowY: 'auto',
@@ -483,7 +792,7 @@ const BpmnModeler = () => {
                         <Typography variant="h6" gutterBottom color="primary">
                             {selectedElement.type.replace('bpmn:', '')} : {selectedElement.businessObject?.name || selectedElement.id}
                         </Typography>
-                        
+
                         {currentProcessId ? (
                             <ElementConfigManager
                                 modeler={bpmnModeler}
@@ -502,8 +811,8 @@ const BpmnModeler = () => {
             </Paper>
 
             {/* Dialog pour créer un nouveau processus */}
-            <Dialog 
-                open={createProcessDialogOpen} 
+            <Dialog
+                open={createProcessDialogOpen}
                 onClose={handleCloseCreateProcessDialog}
                 fullWidth
                 maxWidth="sm"
@@ -526,9 +835,9 @@ const BpmnModeler = () => {
                     <Button onClick={handleCloseCreateProcessDialog} color="inherit">
                         Annuler
                     </Button>
-                    <Button 
-                        onClick={handleCreateProcess} 
-                        color="primary" 
+                    <Button
+                        onClick={handleCreateProcess}
+                        color="primary"
                         variant="contained"
                         disabled={!processName}
                     >
@@ -538,8 +847,8 @@ const BpmnModeler = () => {
             </Dialog>
 
             {/* Dialog for process variables */}
-            <Dialog 
-                open={startDialogOpen} 
+            <Dialog
+                open={startDialogOpen}
                 onClose={handleCloseStartDialog}
                 fullWidth
                 maxWidth="sm"
@@ -550,7 +859,7 @@ const BpmnModeler = () => {
                         <Typography variant="subtitle1" gutterBottom>
                             Clé du processus: {processKey}
                         </Typography>
-                        
+
                         <TextField
                             label="Variables du processus (JSON)"
                             multiline
@@ -569,9 +878,9 @@ const BpmnModeler = () => {
                     <Button onClick={handleCloseStartDialog} color="inherit">
                         Annuler
                     </Button>
-                    <Button 
-                        onClick={handleStartProcess} 
-                        color="primary" 
+                    <Button
+                        onClick={handleStartProcess}
+                        color="primary"
                         variant="contained"
                     >
                         Démarrer

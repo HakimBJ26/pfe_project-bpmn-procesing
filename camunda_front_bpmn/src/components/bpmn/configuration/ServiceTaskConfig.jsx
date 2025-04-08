@@ -1,574 +1,703 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   Button,
   TextField,
-  Typography,
-  Stack,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Switch,
+  FormHelperText,
+  Typography,
+  Grid,
   Box,
   Divider,
-  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  IconButton,
-  Paper,
-  Snackbar,
-  Alert
+  CircularProgress,
+  Alert,
+  IconButton
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
+  Code as CodeIcon,
   Add as AddIcon,
+  AddCircleOutline as AddCircleOutlineIcon,
   Delete as DeleteIcon,
-  Code as CodeIcon
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { CodeEditor } from './CodeEditor';
 import bpmnService from '../../../services/bpmnService';
+import { CodeEditor } from './CodeEditor';
+import authService from '../../../services/authService';
 
-const ServiceTaskConfig = ({ open, onClose, task, processId, onSave }) => {
+const implementationTypeOptions = [
+  { value: 'class', label: 'Classe Java' },
+  { value: 'delegateExpression', label: 'Expression' },
+  { value: 'expression', label: 'Expression ValueMap' }
+];
+
+const ServiceTaskConfig = ({ open, onClose, onSave, task, processId }) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [formData, setFormData] = useState({
-    implementation: '',
-    implementationType: 'class',
-    inputParameters: '[]',
-    outputParameters: '[]',
-    retries: 3,
-    retryTimeout: 'PT5M',
-    asyncBefore: false,
-    asyncAfter: false,
-    exclusive: true
+  const [error, setError] = useState(null);
+  const [implementationType, setImplementationType] = useState('class');
+  const [implementation, setImplementation] = useState('');
+  const [name, setName] = useState('');
+  const [async, setAsync] = useState(false);
+  const [configMode, setConfigMode] = useState('select'); // 'select' ou 'create'
+  const [availableJavaDelegates, setAvailableJavaDelegates] = useState([]);
+  const [javaTemplates, setJavaTemplates] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState('basic');
+  const [newDelegateData, setNewDelegateData] = useState({
+    name: '',
+    sourceCode: '',
+    description: ''
   });
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [inputParams, setInputParams] = useState([]);
   const [outputParams, setOutputParams] = useState([]);
-  
-  // Options pour les types d'implémentation
-  const implementationTypes = [
-    { value: 'class', label: 'Classe Java' },
-    { value: 'delegateExpression', label: 'Expression de délégué (${...})' },
-    { value: 'expression', label: 'Expression' },
-    { value: 'external', label: 'Tâche externe' },
-    { value: 'connector', label: 'Connecteur' }
-  ];
-  
+  const [newInput, setNewInput] = useState({ name: '', value: '' });
+  const [newOutput, setNewOutput] = useState({ name: '', value: '' });
+  const [accordionExpanded, setAccordionExpanded] = useState({
+    delegate: true,
+    params: false,
+    properties: false
+  });
+
+  // Vérification de l'authentification
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuth = await authService.isAuthenticated();
+      setIsAuthenticated(isAuth);
+    };
+    checkAuth();
+  }, []);
+
+  // Chargement des JavaDelegates disponibles
+  useEffect(() => {
+    if (open && isAuthenticated) {
+      loadJavaDelegates();
+      loadJavaTemplates();
+    }
+  }, [open, isAuthenticated]);
+
+  // Initialisation de la configuration à partir de la tâche
   useEffect(() => {
     if (task) {
-      // Charger les configurations existantes si disponibles
-      const loadTaskConfig = async () => {
-        try {
-          setLoading(true);
-          const response = await bpmnService.getServiceTasks(processId);
-          const taskConfig = response.data.find(t => t.taskId === task.id);
-          
-          if (taskConfig) {
-            setFormData({
-              implementation: taskConfig.implementation || '',
-              implementationType: taskConfig.implementationType || 'class',
-              inputParameters: taskConfig.inputParameters || '[]',
-              outputParameters: taskConfig.outputParameters || '[]',
-              retries: taskConfig.retries || 3,
-              retryTimeout: taskConfig.retryTimeout || 'PT5M',
-              asyncBefore: taskConfig.asyncBefore || false,
-              asyncAfter: taskConfig.asyncAfter || false,
-              exclusive: taskConfig.exclusive !== false
-            });
-            
-            try {
-              setInputParams(JSON.parse(taskConfig.inputParameters || '[]'));
-              setOutputParams(JSON.parse(taskConfig.outputParameters || '[]'));
-            } catch (e) {
-              console.error("Erreur lors de l'analyse des paramètres", e);
-              setInputParams([]);
-              setOutputParams([]);
-            }
+      // Initialiser les valeurs à partir de la tâche sélectionnée
+      setName(task.name || '');
+      
+      // Déterminer le type d'implémentation et la valeur
+      if (task.implementation) {
+        if (task.implementationType) {
+          setImplementationType(task.implementationType);
+        } else {
+          // Déterminer le type d'implémentation automatiquement
+          if (task.implementation.startsWith('${')) {
+            setImplementationType('delegateExpression');
+          } else if (task.implementation.includes('.')) {
+            setImplementationType('class');
+          } else {
+            setImplementationType('expression');
           }
-        } catch (err) {
-          console.error("Erreur lors du chargement de la configuration", err);
-          setError("Erreur lors du chargement de la configuration");
-        } finally {
-          setLoading(false);
         }
-      };
-      
-      loadTaskConfig();
-    }
-  }, [task, processId]);
-  
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-  
-  const handleSwitchChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: checked
-    });
-  };
-  
-  // Gestion des paramètres d'entrée
-  const handleAddInputParam = () => {
-    const newParam = {
-      name: '',
-      value: '',
-      type: 'String'
-    };
-    setInputParams([...inputParams, newParam]);
-  };
-  
-  const handleInputParamChange = (index, field, value) => {
-    const updated = [...inputParams];
-    updated[index] = {
-      ...updated[index],
-      [field]: value
-    };
-    setInputParams(updated);
-    setFormData({
-      ...formData,
-      inputParameters: JSON.stringify(updated)
-    });
-  };
-  
-  const handleRemoveInputParam = (index) => {
-    const updated = inputParams.filter((_, i) => i !== index);
-    setInputParams(updated);
-    setFormData({
-      ...formData,
-      inputParameters: JSON.stringify(updated)
-    });
-  };
-  
-  // Gestion des paramètres de sortie
-  const handleAddOutputParam = () => {
-    const newParam = {
-      name: '',
-      value: '',
-      type: 'String'
-    };
-    setOutputParams([...outputParams, newParam]);
-  };
-  
-  const handleOutputParamChange = (index, field, value) => {
-    const updated = [...outputParams];
-    updated[index] = {
-      ...updated[index],
-      [field]: value
-    };
-    setOutputParams(updated);
-    setFormData({
-      ...formData,
-      outputParameters: JSON.stringify(updated)
-    });
-  };
-  
-  const handleRemoveOutputParam = (index) => {
-    const updated = outputParams.filter((_, i) => i !== index);
-    setOutputParams(updated);
-    setFormData({
-      ...formData,
-      outputParameters: JSON.stringify(updated)
-    });
-  };
-  
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      // Mettre à jour les paramètres dans formData
-      const configData = {
-        ...formData,
-        inputParameters: JSON.stringify(inputParams),
-        outputParameters: JSON.stringify(outputParams)
-      };
-      
-      const response = await bpmnService.configureServiceTask(processId, task.id, configData);
-      
-      setSuccess("Configuration enregistrée avec succès");
-      
-      if (onSave) {
-        onSave(response.data);
+        setImplementation(task.implementation);
       }
       
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      // Initialiser les paramètres d'entrée et de sortie s'ils existent
+      if (task.inputParameters) {
+        setInputParams(task.inputParameters.map(param => ({
+          name: param.name || '',
+          value: param.value || ''
+        })));
+      }
       
-    } catch (err) {
-      console.error("Erreur lors de la sauvegarde", err);
-      setError("Erreur lors de la sauvegarde: " + (err.response?.data?.error || err.message));
+      if (task.outputParameters) {
+        setOutputParams(task.outputParameters.map(param => ({
+          name: param.name || '',
+          value: param.value || ''
+        })));
+      }
+      
+      // Initialiser async
+      setAsync(task.async || false);
+    }
+  }, [task]);
+
+  // Fonctions pour charger les JavaDelegates et les modèles
+  const loadJavaDelegates = async () => {
+    try {
+      setLoading(true);
+      const response = await bpmnService.getAvailableJavaDelegates();
+      if (response && response.data && response.data.data) {
+        setAvailableJavaDelegates(response.data.data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des JavaDelegates:', error);
+      setError('Impossible de charger les JavaDelegates. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
   };
-  
-  if (!task) return null;
-  
-  return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      fullWidth
-      maxWidth="md"
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          boxShadow: 8
+
+  const loadJavaTemplates = async () => {
+    try {
+      setLoading(true);
+      const response = await bpmnService.getJavaDelegateTemplates();
+      if (response && response.data && response.data.data) {
+        setJavaTemplates(response.data.data);
+        
+        // Initialiser le champ de source code avec le modèle basic par défaut
+        if (response.data.data.basic) {
+          setNewDelegateData(prev => ({
+            ...prev,
+            sourceCode: response.data.data.basic
+          }));
         }
-      }}
-    >
-      <DialogTitle sx={{ 
-        bgcolor: 'primary.main', 
-        color: 'white',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1
-      }}>
-        <CodeIcon />
-        Configuration de la tâche de service: {task.name || task.id}
-      </DialogTitle>
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des templates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Changement de modèle
+  const handleTemplateChange = (template) => {
+    setSelectedTemplate(template);
+    if (javaTemplates[template]) {
+      setNewDelegateData(prev => ({
+        ...prev,
+        sourceCode: javaTemplates[template]
+      }));
+    }
+  };
+
+  // Sélection d'un JavaDelegate existant
+  const handleSelectJavaDelegate = (className) => {
+    setImplementation(className);
+    setImplementationType('class');
+  };
+
+  // Création d'un nouveau JavaDelegate
+  const handleCreateJavaDelegate = async () => {
+    try {
+      if (!newDelegateData.name || !newDelegateData.sourceCode) {
+        setError('Le nom et le code source sont requis');
+        return;
+      }
       
-      <DialogContent>
-        <Stack spacing={3} sx={{ mt: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Implémentation
-          </Typography>
+      setLoading(true);
+      const response = await bpmnService.createJavaDelegate(newDelegateData);
+      
+      if (response && response.data && response.data.success) {
+        // Ajouter le nouveau delegate à la liste
+        if (response.data.data) {
+          setAvailableJavaDelegates(prev => [...prev, response.data.data]);
           
-          <FormControl fullWidth>
-            <InputLabel id="implementationType-label">Type d'implémentation</InputLabel>
-            <Select
-              labelId="implementationType-label"
-              name="implementationType"
-              value={formData.implementationType}
-              onChange={handleInputChange}
-              label="Type d'implémentation"
-            >
-              {implementationTypes.map(type => (
-                <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          // Sélectionner automatiquement le nouveau delegate
+          setImplementation(response.data.data.className);
+          setImplementationType('class');
+          setConfigMode('select');
           
+          // Réinitialiser le formulaire
+          setNewDelegateData({
+            name: '',
+            sourceCode: '',
+            description: ''
+          });
+          
+          setError(null);
+        }
+      } else {
+        setError(response?.data?.message || 'Erreur lors de la création du JavaDelegate');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création du JavaDelegate', error);
+      setError('Erreur lors de la création du JavaDelegate: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gestion des paramètres d'entrée et de sortie
+  const handleAddInputParam = () => {
+    if (newInput.name.trim() !== '') {
+      setInputParams([...inputParams, { ...newInput }]);
+      setNewInput({ name: '', value: '' });
+    }
+  };
+
+  const handleAddOutputParam = () => {
+    if (newOutput.name.trim() !== '') {
+      setOutputParams([...outputParams, { ...newOutput }]);
+      setNewOutput({ name: '', value: '' });
+    }
+  };
+
+  const handleRemoveInputParam = (index) => {
+    const updatedParams = [...inputParams];
+    updatedParams.splice(index, 1);
+    setInputParams(updatedParams);
+  };
+
+  const handleRemoveOutputParam = (index) => {
+    const updatedParams = [...outputParams];
+    updatedParams.splice(index, 1);
+    setOutputParams(updatedParams);
+  };
+
+  // Soumission du formulaire
+  const handleSubmit = () => {
+    // Validation des champs requis
+    if (!implementation && implementationType !== 'expression') {
+      setError('L\'implémentation est requise');
+      return;
+    }
+
+    // Création de l'objet de configuration
+    const config = {
+      implementationType,
+      implementation,
+      name,
+      async,
+      inputParameters: inputParams,
+      outputParameters: outputParams
+    };
+
+    // Appel de la fonction onSave
+    onSave(config);
+    onClose();
+  };
+
+  // Gestion de l'ouverture/fermeture des accordéons
+  const handleAccordionChange = (section) => (event, isExpanded) => {
+    setAccordionExpanded({
+      ...accordionExpanded,
+      [section]: isExpanded
+    });
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Configuration de la tâche de service</DialogTitle>
+      
+      <DialogContent dividers>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+        
+        {loading && (
+          <Box display="flex" justifyContent="center" my={2}>
+            <CircularProgress />
+          </Box>
+        )}
+        
+        <Box mb={3}>
           <TextField
-            label="Implémentation"
-            name="implementation"
-            value={formData.implementation}
-            onChange={handleInputChange}
+            label="Nom de la tâche"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             fullWidth
-            helperText={
-              formData.implementationType === 'class' 
-                ? "Nom complet de la classe (ex: com.example.MyDelegate)" 
-                : formData.implementationType === 'delegateExpression' 
-                  ? "Expression Spring (ex: ${myDelegate})" 
-                  : "Expression ou identifiant"
-            }
+            margin="normal"
+            helperText="Nom affiché dans le diagramme"
           />
-          
-          <Divider />
-          
-          <Typography variant="h6" gutterBottom>
-            Paramètres d'entrée
-          </Typography>
-          
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            {inputParams.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <Typography color="text.secondary">
-                  Aucun paramètre d'entrée défini
-                </Typography>
+        </Box>
+        
+        {/* Accordéon pour la configuration du JavaDelegate */}
+        <Accordion 
+          expanded={accordionExpanded.delegate} 
+          onChange={handleAccordionChange('delegate')}
+          sx={{ mb: 2 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1">Configuration du JavaDelegate</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Type d'implémentation</InputLabel>
+              <Select
+                value={implementationType}
+                onChange={(e) => setImplementationType(e.target.value)}
+                label="Type d'implémentation"
+              >
+                {implementationTypeOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>
+                Comment la tâche de service doit être exécutée
+              </FormHelperText>
+            </FormControl>
+            
+            {implementationType === 'class' && (
+              <Box mt={2}>
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                  <Typography variant="subtitle2">
+                    Mode de configuration
+                  </Typography>
+                  <Box>
+                    <Button
+                      variant={configMode === 'select' ? "contained" : "outlined"}
+                      onClick={() => setConfigMode('select')}
+                      size="small"
+                      sx={{ mr: 1 }}
+                    >
+                      Sélectionner
+                    </Button>
+                    <Button
+                      variant={configMode === 'create' ? "contained" : "outlined"}
+                      onClick={() => setConfigMode('create')}
+                      size="small"
+                    >
+                      Créer
+                    </Button>
+                  </Box>
+                </Box>
+                
+                <Divider sx={{ mb: 2 }} />
+                
+                {configMode === 'select' ? (
+                  <Box>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                      <Typography variant="subtitle2">
+                        JavaDelegates disponibles
+                      </Typography>
+                      <IconButton 
+                        size="small" 
+                        onClick={loadJavaDelegates}
+                        title="Rafraîchir la liste"
+                      >
+                        <RefreshIcon />
+                      </IconButton>
+                    </Box>
+                    
+                    {availableJavaDelegates.length > 0 ? (
+                      <List sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                        {availableJavaDelegates.map((delegate, index) => (
+                          <ListItem 
+                            key={index} 
+                            button 
+                            selected={implementation === delegate.className}
+                            onClick={() => handleSelectJavaDelegate(delegate.className)}
+                          >
+                            <ListItemIcon>
+                              <CodeIcon />
+                            </ListItemIcon>
+                            <ListItemText 
+                              primary={delegate.className} 
+                              secondary={delegate.description || 'Aucune description disponible'}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary" sx={{ py: 2, textAlign: 'center' }}>
+                        Aucun JavaDelegate disponible
+                      </Typography>
+                    )}
+                    
+                    <TextField
+                      label="Classe sélectionnée"
+                      value={implementation}
+                      onChange={(e) => setImplementation(e.target.value)}
+                      fullWidth
+                      margin="normal"
+                      helperText="Nom complet de la classe (incluant le package)"
+                    />
+                  </Box>
+                ) : (
+                  <Box>
+                    <Box mb={2}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Créer un nouveau JavaDelegate
+                      </Typography>
+                      
+                      <TextField
+                        label="Nom complet de la classe"
+                        value={newDelegateData.name}
+                        onChange={(e) => setNewDelegateData({...newDelegateData, name: e.target.value})}
+                        fullWidth
+                        margin="normal"
+                        helperText="ex: com.example.MyCustomDelegate"
+                      />
+                      
+                      <TextField
+                        label="Description"
+                        value={newDelegateData.description}
+                        onChange={(e) => setNewDelegateData({...newDelegateData, description: e.target.value})}
+                        fullWidth
+                        margin="normal"
+                        helperText="Description optionnelle de la fonctionnalité"
+                      />
+                      
+                      <Box mt={2} mb={1}>
+                        <Typography variant="body2" gutterBottom>
+                          Modèle de code:
+                        </Typography>
+                        
+                        <Box display="flex" gap={1} mb={2}>
+                          <Button
+                            variant={selectedTemplate === 'basic' ? "contained" : "outlined"}
+                            onClick={() => handleTemplateChange('basic')}
+                            size="small"
+                          >
+                            Basique
+                          </Button>
+                          <Button
+                            variant={selectedTemplate === 'logger' ? "contained" : "outlined"}
+                            onClick={() => handleTemplateChange('logger')}
+                            size="small"
+                          >
+                            Logger
+                          </Button>
+                          <Button
+                            variant={selectedTemplate === 'emailSender' ? "contained" : "outlined"}
+                            onClick={() => handleTemplateChange('emailSender')}
+                            size="small"
+                          >
+                            Email
+                          </Button>
+                        </Box>
+                      </Box>
+                      
+                      <Typography variant="body2" gutterBottom>
+                        Code source:
+                      </Typography>
+                      
+                      <CodeEditor
+                        value={newDelegateData.sourceCode}
+                        onChange={(value) => setNewDelegateData({...newDelegateData, sourceCode: value})}
+                        mode="java"
+                        height="300px"
+                      />
+                      
+                      <Box mt={2} display="flex" justifyContent="flex-end">
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleCreateJavaDelegate}
+                          startIcon={<AddIcon />}
+                          disabled={loading}
+                        >
+                          Créer JavaDelegate
+                        </Button>
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
               </Box>
-            ) : (
-              <Stack spacing={2}>
+            )}
+            
+            {implementationType !== 'class' && (
+              <TextField
+                label={implementationType === 'delegateExpression' ? 'Expression de délégation' : 'Expression'}
+                value={implementation}
+                onChange={(e) => setImplementation(e.target.value)}
+                fullWidth
+                margin="normal"
+                helperText={implementationType === 'delegateExpression' ? 
+                  'Expression qui évalue vers un bean JavaDelegate (ex: ${myDelegate})' : 
+                  'Expression à évaluer (ex: ${customer.getName()})'}
+              />
+            )}
+          </AccordionDetails>
+        </Accordion>
+        
+        {/* Accordéon pour les paramètres d'entrée et de sortie */}
+        <Accordion 
+          expanded={accordionExpanded.params} 
+          onChange={handleAccordionChange('params')}
+          sx={{ mb: 2 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1">Paramètres d'entrée et de sortie</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box mb={3}>
+              <Typography variant="subtitle2" gutterBottom>
+                Paramètres d'entrée
+              </Typography>
+              
+              <Box>
                 {inputParams.map((param, index) => (
                   <Box 
-                    key={index}
-                    sx={{ 
-                      p: 2, 
-                      border: 1, 
-                      borderColor: 'divider', 
-                      borderRadius: 1,
-                      position: 'relative'
-                    }}
+                    key={index} 
+                    display="flex" 
+                    alignItems="center" 
+                    mb={1}
+                    p={1}
+                    border="1px solid #e0e0e0"
+                    borderRadius={1}
                   >
-                    <IconButton
-                      size="small"
-                      color="error"
+                    <Box flex={1}>
+                      <Typography variant="body2" fontWeight="bold">{param.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">{param.value}</Typography>
+                    </Box>
+                    <IconButton 
+                      size="small" 
+                      color="error" 
                       onClick={() => handleRemoveInputParam(index)}
-                      sx={{ position: 'absolute', top: 8, right: 8 }}
                     >
                       <DeleteIcon />
                     </IconButton>
-                    
-                    <Stack spacing={2}>
-                      <TextField
-                        label="Nom du paramètre"
-                        value={param.name}
-                        onChange={(e) => handleInputParamChange(index, 'name', e.target.value)}
-                        fullWidth
-                      />
-                      
-                      <Stack direction="row" spacing={2}>
-                        <FormControl fullWidth>
-                          <InputLabel>Type</InputLabel>
-                          <Select
-                            value={param.type}
-                            label="Type"
-                            onChange={(e) => handleInputParamChange(index, 'type', e.target.value)}
-                          >
-                            <MenuItem value="String">Texte</MenuItem>
-                            <MenuItem value="Integer">Nombre entier</MenuItem>
-                            <MenuItem value="Double">Nombre décimal</MenuItem>
-                            <MenuItem value="Boolean">Booléen</MenuItem>
-                            <MenuItem value="Date">Date</MenuItem>
-                            <MenuItem value="Object">Objet</MenuItem>
-                            <MenuItem value="Expression">Expression</MenuItem>
-                          </Select>
-                        </FormControl>
-                        
-                        <TextField
-                          label="Valeur"
-                          value={param.value}
-                          onChange={(e) => handleInputParamChange(index, 'value', e.target.value)}
-                          fullWidth
-                          multiline={param.type === 'Object' || param.type === 'Expression'}
-                          rows={param.type === 'Object' || param.type === 'Expression' ? 3 : 1}
-                        />
-                      </Stack>
-                    </Stack>
                   </Box>
                 ))}
-              </Stack>
-            )}
-            
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Button
-                startIcon={<AddIcon />}
-                variant="outlined"
-                onClick={handleAddInputParam}
-              >
-                Ajouter un paramètre d'entrée
-              </Button>
-            </Box>
-          </Paper>
-          
-          <Divider />
-          
-          <Typography variant="h6" gutterBottom>
-            Paramètres de sortie
-          </Typography>
-          
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            {outputParams.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <Typography color="text.secondary">
-                  Aucun paramètre de sortie défini
-                </Typography>
               </Box>
-            ) : (
-              <Stack spacing={2}>
+              
+              <Grid container spacing={2} alignItems="flex-end">
+                <Grid item xs={5}>
+                  <TextField
+                    label="Nom"
+                    value={newInput.name}
+                    onChange={(e) => setNewInput({...newInput, name: e.target.value})}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={5}>
+                  <TextField
+                    label="Valeur"
+                    value={newInput.value}
+                    onChange={(e) => setNewInput({...newInput, value: e.target.value})}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={2}>
+                  <Button
+                    fullWidth
+                    color="primary"
+                    onClick={handleAddInputParam}
+                    startIcon={<AddCircleOutlineIcon />}
+                    disabled={!newInput.name.trim()}
+                  >
+                    Ajouter
+                  </Button>
+                </Grid>
+              </Grid>
+            </Box>
+            
+            <Divider sx={{ my: 2 }} />
+            
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Paramètres de sortie
+              </Typography>
+              
+              <Box>
                 {outputParams.map((param, index) => (
                   <Box 
-                    key={index}
-                    sx={{ 
-                      p: 2, 
-                      border: 1, 
-                      borderColor: 'divider', 
-                      borderRadius: 1,
-                      position: 'relative'
-                    }}
+                    key={index} 
+                    display="flex" 
+                    alignItems="center" 
+                    mb={1}
+                    p={1}
+                    border="1px solid #e0e0e0"
+                    borderRadius={1}
                   >
-                    <IconButton
-                      size="small"
-                      color="error"
+                    <Box flex={1}>
+                      <Typography variant="body2" fontWeight="bold">{param.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">{param.value}</Typography>
+                    </Box>
+                    <IconButton 
+                      size="small" 
+                      color="error" 
                       onClick={() => handleRemoveOutputParam(index)}
-                      sx={{ position: 'absolute', top: 8, right: 8 }}
                     >
                       <DeleteIcon />
                     </IconButton>
-                    
-                    <Stack spacing={2}>
-                      <TextField
-                        label="Nom du paramètre"
-                        value={param.name}
-                        onChange={(e) => handleOutputParamChange(index, 'name', e.target.value)}
-                        fullWidth
-                      />
-                      
-                      <Stack direction="row" spacing={2}>
-                        <FormControl fullWidth>
-                          <InputLabel>Type</InputLabel>
-                          <Select
-                            value={param.type}
-                            label="Type"
-                            onChange={(e) => handleOutputParamChange(index, 'type', e.target.value)}
-                          >
-                            <MenuItem value="String">Texte</MenuItem>
-                            <MenuItem value="Integer">Nombre entier</MenuItem>
-                            <MenuItem value="Double">Nombre décimal</MenuItem>
-                            <MenuItem value="Boolean">Booléen</MenuItem>
-                            <MenuItem value="Date">Date</MenuItem>
-                            <MenuItem value="Object">Objet</MenuItem>
-                            <MenuItem value="Expression">Expression</MenuItem>
-                          </Select>
-                        </FormControl>
-                        
-                        <TextField
-                          label="Expression"
-                          value={param.value}
-                          onChange={(e) => handleOutputParamChange(index, 'value', e.target.value)}
-                          fullWidth
-                          multiline={param.type === 'Object' || param.type === 'Expression'}
-                          rows={param.type === 'Object' || param.type === 'Expression' ? 3 : 1}
-                          helperText="Expression pour extraire la valeur (ex: ${result})"
-                        />
-                      </Stack>
-                    </Stack>
                   </Box>
                 ))}
-              </Stack>
-            )}
-            
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Button
-                startIcon={<AddIcon />}
-                variant="outlined"
-                onClick={handleAddOutputParam}
-              >
-                Ajouter un paramètre de sortie
-              </Button>
+              </Box>
+              
+              <Grid container spacing={2} alignItems="flex-end">
+                <Grid item xs={5}>
+                  <TextField
+                    label="Nom"
+                    value={newOutput.name}
+                    onChange={(e) => setNewOutput({...newOutput, name: e.target.value})}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={5}>
+                  <TextField
+                    label="Valeur"
+                    value={newOutput.value}
+                    onChange={(e) => setNewOutput({...newOutput, value: e.target.value})}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={2}>
+                  <Button
+                    fullWidth
+                    color="primary"
+                    onClick={handleAddOutputParam}
+                    startIcon={<AddCircleOutlineIcon />}
+                    disabled={!newOutput.name.trim()}
+                  >
+                    Ajouter
+                  </Button>
+                </Grid>
+              </Grid>
             </Box>
-          </Paper>
-          
-          <Divider />
-          
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">Options avancées</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={3}>
-                <TextField
-                  label="Nombre de tentatives"
-                  name="retries"
-                  type="number"
-                  value={formData.retries}
-                  onChange={handleInputChange}
-                  inputProps={{ min: 0 }}
-                  fullWidth
-                  helperText="Nombre de fois que la tâche sera réessayée en cas d'échec"
-                />
-                
-                <TextField
-                  label="Intervalle entre les tentatives"
-                  name="retryTimeout"
-                  value={formData.retryTimeout}
-                  onChange={handleInputChange}
-                  fullWidth
-                  helperText="Format ISO 8601 durée (ex: PT5M pour 5 minutes, PT1H pour 1 heure)"
-                />
-                
-                <Box sx={{ mt: 2 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.asyncBefore}
-                        onChange={handleSwitchChange}
-                        name="asyncBefore"
-                      />
-                    }
-                    label="Exécution asynchrone avant la tâche"
-                  />
-                </Box>
-                
-                <Box>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.asyncAfter}
-                        onChange={handleSwitchChange}
-                        name="asyncAfter"
-                      />
-                    }
-                    label="Exécution asynchrone après la tâche"
-                  />
-                </Box>
-                
-                <Box>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.exclusive}
-                        onChange={handleSwitchChange}
-                        name="exclusive"
-                      />
-                    }
-                    label="Exécution exclusive (recommandé)"
-                  />
-                </Box>
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        </Stack>
+          </AccordionDetails>
+        </Accordion>
+        
+        {/* Accordéon pour les propriétés avancées */}
+        <Accordion 
+          expanded={accordionExpanded.properties} 
+          onChange={handleAccordionChange('properties')}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1">Propriétés avancées</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <FormControl component="fieldset" fullWidth margin="normal">
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="body2">Exécution asynchrone:</Typography>
+                </Grid>
+                <Grid item>
+                  <Button
+                    variant={async ? "contained" : "outlined"}
+                    color={async ? "primary" : "inherit"}
+                    onClick={() => setAsync(!async)}
+                    size="small"
+                  >
+                    {async ? "Activé" : "Désactivé"}
+                  </Button>
+                </Grid>
+              </Grid>
+              <FormHelperText>
+                Si activé, cette tâche sera exécutée de manière asynchrone
+              </FormHelperText>
+            </FormControl>
+          </AccordionDetails>
+        </Accordion>
       </DialogContent>
       
-      <DialogActions sx={{ p: 2, bgcolor: 'grey.50' }}>
-        <Button 
-          onClick={onClose} 
-          color="inherit"
-          variant="outlined"
-          disabled={loading}
-        >
+      <DialogActions>
+        <Button onClick={onClose} color="inherit">
           Annuler
         </Button>
-        <Button 
-          onClick={handleSave} 
-          color="primary" 
-          variant="contained"
-          disabled={loading}
-          startIcon={loading && <CircularProgress size={20} color="inherit" />}
-        >
+        <Button onClick={handleSubmit} color="primary" variant="contained">
           Enregistrer
         </Button>
       </DialogActions>
-      
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
-        onClose={() => setError('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" variant="filled">
-          {error}
-        </Alert>
-      </Snackbar>
-      
-      <Snackbar 
-        open={!!success} 
-        autoHideDuration={3000}
-        onClose={() => setSuccess('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="success" variant="filled">
-          {success}
-        </Alert>
-      </Snackbar>
     </Dialog>
   );
 };

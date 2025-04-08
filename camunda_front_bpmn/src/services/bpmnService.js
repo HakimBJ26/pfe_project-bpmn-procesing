@@ -117,7 +117,43 @@ export const bpmnService = {
   // Validation du processus
   validateProcess: async (processId) => {
     return axios.get(`${API_URL}/processes/${processId}/validate`, getAuthHeader());
-  }
+  },
+  
+  // JavaDelegates - Nouvelles méthodes
+  getAvailableJavaDelegates: async () => {
+    return axios.get(`${API_URL}/java-delegates`, getAuthHeader());
+  },
+  
+  getJavaDelegateTemplates: async (packageName, className) => {
+    let url = `${API_URL}/java-delegates/templates`;
+    if (packageName || className) {
+      const params = new URLSearchParams();
+      if (packageName) params.append('packageName', packageName);
+      if (className) params.append('className', className);
+      url = `${url}?${params.toString()}`;
+    }
+    return axios.get(url, getAuthHeader());
+  },
+
+  getJavaDelegateByClassName: async (className) => {
+    return axios.get(`${API_URL}/java-delegates/${encodeURIComponent(className)}`, getAuthHeader());
+  },
+
+  createJavaDelegate: async (delegateRequest) => {
+    return axios.post(`${API_URL}/java-delegates`, delegateRequest, getAuthHeader());
+  },
+
+  updateJavaDelegate: async (className, delegateRequest) => {
+    return axios.put(`${API_URL}/java-delegates/${encodeURIComponent(className)}`, delegateRequest, getAuthHeader());
+  },
+
+  deleteJavaDelegate: async (className) => {
+    return axios.delete(`${API_URL}/java-delegates/${encodeURIComponent(className)}`, getAuthHeader());
+  },
+
+  testJavaDelegate: async (className, testData) => {
+    return axios.post(`${API_URL}/java-delegates/${encodeURIComponent(className)}/test`, testData, getAuthHeader());
+  },
 };
 
 export default bpmnService;

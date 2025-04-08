@@ -29,7 +29,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const FIELD_TYPES = [
-  { label: 'Texte court', value: 'text' },
+  { label: 'Texte court', value: 'string' },
   { label: 'Texte long', value: 'textarea' },
   { label: 'Nombre', value: 'number' },
   { label: 'Date', value: 'date' },
@@ -44,12 +44,12 @@ const FIELD_TYPES = [
 
 const DynamicFormBuilder = ({ value = [], onChange }) => {
   const [formFields, setFormFields] = useState(value);
-  
+
   // Ajouter un nouveau champ
   const handleAddField = () => {
     const newField = {
       id: `field_${Date.now()}`,
-      type: 'text',
+      type: 'string',
       label: 'Nouveau champ',
       name: `field_${formFields.length + 1}`,
       required: false,
@@ -58,19 +58,19 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
       options: [],
       validations: {}
     };
-    
+
     const updatedFields = [...formFields, newField];
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Supprimer un champ
   const handleDeleteField = (index) => {
     const updatedFields = formFields.filter((_, i) => i !== index);
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Mettre à jour un champ
   const handleUpdateField = (index, field, value) => {
     const updatedFields = [...formFields];
@@ -78,18 +78,18 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
       ...updatedFields[index],
       [field]: value
     };
-    
+
     // Si le label change, suggérer un nom basé sur le label
     if (field === 'label') {
       updatedFields[index].name = value
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '_');
     }
-    
+
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Ajouter une option pour les champs select, checkbox ou radio
   const handleAddOption = (index) => {
     const updatedFields = [...formFields];
@@ -98,12 +98,12 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
       label: `Option ${options.length + 1}`,
       value: `option_${options.length + 1}`
     });
-    
+
     updatedFields[index].options = options;
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Mettre à jour une option
   const handleUpdateOption = (fieldIndex, optionIndex, field, value) => {
     const updatedFields = [...formFields];
@@ -111,60 +111,60 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
       ...updatedFields[fieldIndex].options[optionIndex],
       [field]: value
     };
-    
+
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Supprimer une option
   const handleDeleteOption = (fieldIndex, optionIndex) => {
     const updatedFields = [...formFields];
     updatedFields[fieldIndex].options = updatedFields[fieldIndex].options.filter(
       (_, i) => i !== optionIndex
     );
-    
+
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Gérer le drag and drop des champs
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    
+
     const items = Array.from(formFields);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
-    
+
     setFormFields(items);
     onChange(items);
   };
-  
+
   // Déplacer un champ vers le haut
   const handleMoveUp = (index) => {
     if (index === 0) return;
-    
+
     const updatedFields = [...formFields];
     const temp = updatedFields[index];
     updatedFields[index] = updatedFields[index - 1];
     updatedFields[index - 1] = temp;
-    
+
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   // Déplacer un champ vers le bas
   const handleMoveDown = (index) => {
     if (index === formFields.length - 1) return;
-    
+
     const updatedFields = [...formFields];
     const temp = updatedFields[index];
     updatedFields[index] = updatedFields[index + 1];
     updatedFields[index + 1] = temp;
-    
+
     setFormFields(updatedFields);
     onChange(updatedFields);
   };
-  
+
   return (
     <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.paper' }}>
       <Stack spacing={2}>
@@ -179,7 +179,7 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
             Ajouter un champ
           </Button>
         </Box>
-        
+
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="formFields">
             {(provided) => (
@@ -210,10 +210,10 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
                           >
                             <CardHeader
                               title={
-                                <Box 
-                                  sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center' 
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center'
                                   }}
                                   {...provided.dragHandleProps}
                                 >
@@ -324,7 +324,7 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
                                     label="Champ obligatoire"
                                   />
                                 </Grid>
-                                
+
                                 {/* Options pour select, checkbox, radio */}
                                 {['select', 'checkbox', 'radio'].includes(field.type) && (
                                   <Grid item xs={12}>
@@ -339,7 +339,7 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
                                         Ajouter une option
                                       </Button>
                                     </Box>
-                                    
+
                                     <Stack spacing={1}>
                                       {(field.options || []).map((option, optionIndex) => (
                                         <Box
@@ -407,7 +407,7 @@ const DynamicFormBuilder = ({ value = [], onChange }) => {
             )}
           </Droppable>
         </DragDropContext>
-        
+
         {formFields.length > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Button
