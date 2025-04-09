@@ -66,10 +66,10 @@
         </dependency>
 
         <dependency>
-    <groupId>com.vladmihalcea</groupId>
-    <artifactId>hibernate-types-52</artifactId>
-    <version>2.16.2</version>
-</dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.16.2</version>
+        </dependency>
 
         <!-- Kafka -->
         <dependency>
@@ -147,6 +147,23 @@
             <groupId>org.camunda.bpm</groupId>
             <artifactId>camunda-engine-spring</artifactId>
             <version>7.19.0</version>
+        </dependency>
+
+        <!-- JUEL Expression Language pour l'évaluation DMN -->
+        <dependency>
+            <groupId>de.odysseus.juel</groupId>
+            <artifactId>juel-api</artifactId>
+            <version>2.2.7</version>
+        </dependency>
+        <dependency>
+            <groupId>de.odysseus.juel</groupId>
+            <artifactId>juel-impl</artifactId>
+            <version>2.2.7</version>
+        </dependency>
+        <dependency>
+            <groupId>de.odysseus.juel</groupId>
+            <artifactId>juel-spi</artifactId>
+            <version>2.2.7</version>
         </dependency>
 
         <dependency>

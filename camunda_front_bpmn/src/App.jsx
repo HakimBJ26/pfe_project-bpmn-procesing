@@ -16,6 +16,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 // Import des pages BPMN
 import DmnModeler from './components/bpmn/DmnModeler';
+import DmnHistory from './components/bpmn/DmnHistory';
 import BpmnModeler from './components/bpmn/BpmnModeler';
 import StartProcessPage from './components/process/StartProcessPage';
 // Import des composants de gestion des tâches
@@ -75,6 +76,15 @@ function App() {
                   element={
                     <ProtectedRoute roles={['ROLE_USER', 'ROLE_ADMIN']}>
                       <DmnModeler />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/dmn-history"
+                  element={
+                    <ProtectedRoute roles={['ROLE_USER', 'ROLE_ADMIN']}>
+                      <DmnHistory />
                     </ProtectedRoute>
                   }
                 />

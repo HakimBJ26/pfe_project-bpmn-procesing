@@ -51,7 +51,8 @@ const Sidebar = ({ open }) => {
     { to: '/tasks', label: 'Mes tâches', icon: <Assignment /> },
     { to: '/processes', label: 'Process', icon: <TableChart /> },
     { to: '/run/:processId', label: 'run', icon: <TableChart /> },
-    { to: '/dmn-modeler', label: 'DMN Manager', icon: <TableChart /> }
+    { to: '/dmn-modeler', label: 'DMN Manager', icon: <Edit /> },
+    { to: '/dmn-history', label: 'Historique DMN', icon: <History /> }
   ];
 
   const userLinks = [
