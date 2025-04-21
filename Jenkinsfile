@@ -23,17 +23,123 @@ pipeline {
         }
         
         stage('Backend - Build & Test') {
-            steps {
-                dir('spring-boot-microservices-main/spring-boot-microservices-main') {
-                    sh 'mvn clean package -DskipTests'
+            parallel {
+                stage('auth-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/auth-service') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('job-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/job-service') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('config-server') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/config-server') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('eureka-server') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/eureka-server') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('file-storage') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/file-storage') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('gateway') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/gateway') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('notification-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/notification-service') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
+                }
+                stage('user-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/user-service') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
                 }
             }
         }
         
         stage('Backend - Unit Tests') {
-            steps {
-                dir('spring-boot-microservices-main/spring-boot-microservices-main') {
-                    sh 'mvn test'
+            parallel {
+                stage('auth-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/auth-service') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('job-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/job-service') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('config-server') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/config-server') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('eureka-server') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/eureka-server') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('file-storage') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/file-storage') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('gateway') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/gateway') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('notification-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/notification-service') {
+                            sh 'mvn test'
+                        }
+                    }
+                }
+                stage('user-service') {
+                    steps {
+                        dir('spring-boot-microservices-main/spring-boot-microservices-main/user-service') {
+                            sh 'mvn test'
+                        }
+                    }
                 }
             }
         }
