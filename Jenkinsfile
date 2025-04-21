@@ -1,9 +1,5 @@
 pipeline {
     agent any
-
-    options {
-        retry(3)
-    }
     
     tools {
         jdk 'JDK17'
