@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Vérification de l\'environnement') {
+            steps {
+                echo "Vérification de l'environnement Jenkins..."
+                sh 'java -version || echo "Java non disponible"'
+                sh 'mvn -version || echo "Maven non disponible"'
+                sh 'node -v || echo "Node non disponible"'
+                sh 'npm -v || echo "NPM non disponible"'
+                sh 'pwd && ls -la'
+            }
+        }
+        
+        stage('Test simple') {
+            steps {
+                echo "Test réussi! Jenkins fonctionne correctement."
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "Pipeline terminée avec succès!"
+        }
+        failure {
+            echo "Pipeline échouée!"
+        }
+    }
+}
