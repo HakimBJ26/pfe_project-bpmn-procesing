@@ -10,8 +10,7 @@ import Register from './pages/auth/Register';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDashboard from './pages/user/UserDashboard';
 import UserManagement from './pages/admin/UserManagement';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 // Import des pages BPMN
@@ -107,7 +106,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                
+
                 <Route
                   path="/tasks/:taskId"
                   element={
@@ -116,7 +115,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                
+
                 <Route
                   path="/tasks/:taskId/complete"
                   element={
@@ -141,7 +140,7 @@ function App() {
                 {/* Route par défaut */}
                 <Route path="/" element={<Navigate to="/dashboard" />} />
               </Routes>
-              <ToastContainer
+              
                 position="bottom-right"
                 autoClose={5000}
                 hideProgressBar={false}
@@ -152,7 +151,7 @@ function App() {
                 draggable
                 pauseOnHover
                 theme="colored"
-              />
+              
             </Layout>
           </Router>
         </AuthProvider>

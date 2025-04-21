@@ -7,10 +7,12 @@ import 'dmn-js/dist/assets/dmn-js-decision-table.css';
 import 'dmn-js/dist/assets/dmn-js-decision-table-controls.css';
 import 'dmn-js/dist/assets/dmn-js-literal-expression.css';
 import 'dmn-font/dist/css/dmn.css';
-import { Box, Paper, Button, Typography, CircularProgress, Alert, Divider, Stack, Snackbar,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
+import 'react-toastify/dist/ReactToastify.css';
+import {
+  Box, Paper, Button, Typography, CircularProgress, Alert, Divider, Stack, Snackbar,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton
+} from '@mui/material';
 import { FileUpload, Save, FileDownload, CloudUpload, PlayArrow, List, Add } from '@mui/icons-material';
-import { toast } from 'react-toastify';
 import './DmnModeler.css';
 import dmnService from '../../services/dmnService';
 
@@ -200,7 +202,7 @@ const DmnModeler = () => {
 
     } catch (err) {
       console.error("Erreur lors de la création de la décision", err);
-      setError("Erreur lors de la création de la décision: " + 
+      setError("Erreur lors de la création de la décision: " +
         (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
@@ -217,14 +219,14 @@ const DmnModeler = () => {
     try {
       // Exporter le XML DMN
       const { xml } = await dmnJS.saveXML({ format: true });
-      
+
       // Créer un fichier à partir du XML
       const blob = new Blob([xml], { type: 'application/xml' });
       const file = new File([blob], 'decision.dmn');
-      
+
       // Appeler le service de déploiement
       const response = await dmnService.deployDmn(file);
-      
+
       setDeploymentId(response.data.deploymentId);
       setDecisionKey(response.data.decisionKey);
       setSuccess('Décision DMN déployée avec succès');
@@ -248,14 +250,14 @@ const DmnModeler = () => {
 
     try {
       const { xml } = await dmnJS.saveXML({ format: true });
-      
+
       // Appel à l'API pour sauvegarder le XML de la décision
       await dmnService.updateDmnXml(currentDmnId, { xml });
 
       setSuccess('Décision sauvegardée avec succès');
     } catch (err) {
       console.error("Erreur lors de la sauvegarde", err);
-      setError("Erreur lors de la sauvegarde: " + 
+      setError("Erreur lors de la sauvegarde: " +
         (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
@@ -359,7 +361,7 @@ const DmnModeler = () => {
           </Button>
           <Button
             variant="contained"
-            color="secondary" 
+            color="secondary"
             startIcon={<CloudUpload />}
             onClick={handleDeploy}
             disabled={loading}
@@ -388,7 +390,7 @@ const DmnModeler = () => {
             {success}
           </Alert>
         )}
-        
+
         {decisionKey && (
           <Alert severity="info" sx={{ mb: 2 }}>
             Decision Key: {decisionKey} {deploymentId && ` | Deployment ID: ${deploymentId}`}
@@ -452,8 +454,8 @@ const DmnModeler = () => {
       </Dialog>
 
       {/* Dialog pour exécuter une décision */}
-      <Dialog 
-        open={execDialogOpen} 
+      <Dialog
+        open={execDialogOpen}
         onClose={handleCloseExecDialog}
         maxWidth="md"
         fullWidth
@@ -474,7 +476,7 @@ const DmnModeler = () => {
             onChange={(e) => setVariables(e.target.value)}
             placeholder='{"input1": "valeur"}'
           />
-          
+
           {result && (
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6">Résultat:</Typography>
