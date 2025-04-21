@@ -13,10 +13,18 @@ pipeline {
                 checkout scm
             }
         }
+
+        stage('Debug - List Files') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
+                sh 'find . -name "pom.xml" | sort'
+            }
+        }
         
         stage('Backend - Build & Test') {
             steps {
-                dir('spring-boot-microservices-main') {
+                dir('spring-boot-microservices-main/spring-boot-microservices-main') {
                     sh 'mvn clean package -DskipTests'
                 }
             }
@@ -24,7 +32,7 @@ pipeline {
         
         stage('Backend - Unit Tests') {
             steps {
-                dir('spring-boot-microservices-main') {
+                dir('spring-boot-microservices-main/spring-boot-microservices-main') {
                     sh 'mvn test'
                 }
             }
