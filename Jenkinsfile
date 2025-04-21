@@ -26,56 +26,56 @@ pipeline {
             parallel {
                 stage('auth-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/auth-service') {
+                        dir('spring-boot-microservices-main/auth-service') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('job-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/job-service') {
+                        dir('spring-boot-microservices-main/job-service') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('config-server') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/config-server') {
+                        dir('spring-boot-microservices-main/config-server') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('eureka-server') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/eureka-server') {
+                        dir('spring-boot-microservices-main/eureka-server') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('file-storage') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/file-storage') {
+                        dir('spring-boot-microservices-main/file-storage') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('gateway') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/gateway') {
+                        dir('spring-boot-microservices-main/gateway') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('notification-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/notification-service') {
+                        dir('spring-boot-microservices-main/notification-service') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
                 }
                 stage('user-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/user-service') {
+                        dir('spring-boot-microservices-main/user-service') {
                             sh 'mvn clean package -DskipTests'
                         }
                     }
@@ -87,56 +87,56 @@ pipeline {
             parallel {
                 stage('auth-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/auth-service') {
+                        dir('spring-boot-microservices-main/auth-service') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('job-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/job-service') {
+                        dir('spring-boot-microservices-main/job-service') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('config-server') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/config-server') {
+                        dir('spring-boot-microservices-main/config-server') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('eureka-server') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/eureka-server') {
+                        dir('spring-boot-microservices-main/eureka-server') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('file-storage') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/file-storage') {
+                        dir('spring-boot-microservices-main/file-storage') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('gateway') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/gateway') {
+                        dir('spring-boot-microservices-main/gateway') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('notification-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/notification-service') {
+                        dir('spring-boot-microservices-main/notification-service') {
                             sh 'mvn test'
                         }
                     }
                 }
                 stage('user-service') {
                     steps {
-                        dir('spring-boot-microservices-main/spring-boot-microservices-main/user-service') {
+                        dir('spring-boot-microservices-main/user-service') {
                             sh 'mvn test'
                         }
                     }
