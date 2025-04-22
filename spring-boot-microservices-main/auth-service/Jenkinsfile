@@ -11,9 +11,7 @@ pipeline {
         }
         stage('Build auth-service') {
             steps {
-                dir('spring-boot-microservices-main/auth-service') {
                 sh 'mvn clean package -DskipTests'
-            }
             }
         }
     }
