@@ -9,10 +9,23 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build job-service') {
+        stage('Build camunda-service') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                dir('spring-boot-microservices-main/job-service') {
+                    sh 'mvn clean package -DskipTests'
+                }
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }

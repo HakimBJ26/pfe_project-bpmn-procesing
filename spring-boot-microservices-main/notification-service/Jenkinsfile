@@ -11,8 +11,21 @@ pipeline {
         }
         stage('Build notification-service') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                dir('spring-boot-microservices-main/notification-service') {
+                    sh 'mvn clean package -DskipTests'
+                }
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }

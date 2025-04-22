@@ -11,8 +11,21 @@ pipeline {
         }
         stage('Build eureka-server') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                dir('spring-boot-microservices-main/eureka-server') {
+                    sh 'mvn clean package -DskipTests'
+                }
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
