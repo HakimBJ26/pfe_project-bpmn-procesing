@@ -9,16 +9,9 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Debug Directory Structure') {
-            steps {
-                sh 'pwd'
-                sh 'ls -la'
-                sh 'find . -name "pom.xml" | sort'
-            }
-        }
         stage('Build auth-service') {
             steps {
-                dir('auth-service') {
+                dir('spring-boot-microservices-main/auth-service') {
                     sh 'mvn clean package -DskipTests'
                 }
             }
