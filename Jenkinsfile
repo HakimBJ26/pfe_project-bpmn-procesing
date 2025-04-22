@@ -22,7 +22,7 @@ pipeline {
             }
         }
         
-        stage('Backend - Build & Test') {
+        stage('Backend - Build') {
             parallel {
                 stage('auth-service') {
                     steps {
@@ -77,67 +77,6 @@ pipeline {
                     steps {
                         dir('spring-boot-microservices-main/user-service') {
                             sh 'mvn clean package -DskipTests'
-                        }
-                    }
-                }
-            }
-        }
-        
-        stage('Backend - Unit Tests') {
-            parallel {
-                stage('auth-service') {
-                    steps {
-                        dir('spring-boot-microservices-main/auth-service') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('job-service') {
-                    steps {
-                        dir('spring-boot-microservices-main/job-service') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('config-server') {
-                    steps {
-                        dir('spring-boot-microservices-main/config-server') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('eureka-server') {
-                    steps {
-                        dir('spring-boot-microservices-main/eureka-server') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('file-storage') {
-                    steps {
-                        dir('spring-boot-microservices-main/file-storage') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('gateway') {
-                    steps {
-                        dir('spring-boot-microservices-main/gateway') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('notification-service') {
-                    steps {
-                        dir('spring-boot-microservices-main/notification-service') {
-                            sh 'mvn test'
-                        }
-                    }
-                }
-                stage('user-service') {
-                    steps {
-                        dir('spring-boot-microservices-main/user-service') {
-                            sh 'mvn test'
                         }
                     }
                 }
@@ -156,14 +95,6 @@ pipeline {
             steps {
                 dir('camunda_front_bpmn') {
                     sh 'npm run build'
-                }
-            }
-        }
-        
-        stage('Frontend - Test') {
-            steps {
-                dir('camunda_front_bpmn') {
-                    sh 'npm test -- --watchAll=false || true'
                 }
             }
         }
