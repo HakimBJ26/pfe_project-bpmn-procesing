@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.6-openjdk-17'
-            args '-v /var/jenkins_home/.m2:/root/.m2'
-        }
-    }
+    agent any
     
     tools {
         jdk 'JDK17'
