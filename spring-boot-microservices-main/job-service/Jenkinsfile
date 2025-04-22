@@ -9,10 +9,41 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build camunda-service') {
+        stage('Build job-service') {
             steps {
                 dir('spring-boot-microservices-main/job-service') {
-                    sh 'mvn clean package -DskipTests'
+                    sh 'mvn clean compile'
+                }
+            }
+        }
+        stage('Unit Tests') {
+            steps {
+                dir('spring-boot-microservices-main/job-service') {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Integration Tests') {
+            steps {
+                dir('spring-boot-microservices-main/job-service') {
+                    sh 'mvn verify'
+                }
+            }
+            post {
+                always {
+                    junit '**/target/failsafe-reports/*.xml'
+                }
+            }
+        }
+        stage('Package') {
+            steps {
+                dir('spring-boot-microservices-main/job-service') {
+                    sh 'mvn package -DskipTests'
                 }
             }
         }
