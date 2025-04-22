@@ -9,6 +9,13 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Debug Directory Structure') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
+                sh 'find . -name "pom.xml" | sort'
+            }
+        }
         stage('Build auth-service') {
             steps {
                 dir('auth-service') {
