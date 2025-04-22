@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build gateway') {
+            steps {
+                dir('spring-boot-microservices-main/gateway') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
