@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+    tools {
+        nodejs 'Node20'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build camunda_front_bpmn') {
+            steps {
+                sh 'npm install'
+                sh 'npm run build'
+            }
+        }
+    }
+}

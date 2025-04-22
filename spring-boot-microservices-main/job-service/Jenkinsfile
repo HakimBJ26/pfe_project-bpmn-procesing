@@ -9,11 +9,9 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build auth-service') {
+        stage('Build job-service') {
             steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn clean package -DskipTests'
-                }
+                sh 'mvn clean package -DskipTests'
             }
         }
     }

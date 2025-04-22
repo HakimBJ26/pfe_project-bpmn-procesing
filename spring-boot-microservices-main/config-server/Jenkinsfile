@@ -1,0 +1,18 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build config-server') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+    }
+}
