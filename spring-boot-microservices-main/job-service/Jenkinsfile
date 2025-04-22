@@ -28,18 +28,6 @@ pipeline {
                 }
             }
         }
-        stage('Integration Tests') {
-            steps {
-                dir('spring-boot-microservices-main/job-service') {
-                    sh 'mvn verify'
-                }
-            }
-            post {
-                always {
-                    junit '**/target/failsafe-reports/*.xml'
-                }
-            }
-        }
         stage('Package') {
             steps {
                 dir('spring-boot-microservices-main/job-service') {

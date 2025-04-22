@@ -122,12 +122,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.vladmihalcea</groupId>
-            <artifactId>hibernate-types-52</artifactId>
-            <version>2.16.2</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.camunda.bpm.springboot</groupId>
             <artifactId>camunda-bpm-spring-boot-starter-webapp</artifactId>
             <version>7.19.0</version>

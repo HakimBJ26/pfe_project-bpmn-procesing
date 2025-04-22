@@ -229,14 +229,14 @@ public class JavaDelegateInitializer {
         return "package com.example.delegates;\n\n" +
                 "import org.camunda.bpm.engine.delegate.DelegateExecution;\n" +
                 "import org.camunda.bpm.engine.delegate.JavaDelegate;\n" +
-                "import org.springframework.stereotype.Component;\n" +
                 "import org.slf4j.Logger;\n" +
                 "import org.slf4j.LoggerFactory;\n" +
                 "import org.springframework.http.HttpEntity;\n" +
                 "import org.springframework.http.HttpHeaders;\n" +
                 "import org.springframework.http.HttpMethod;\n" +
                 "import org.springframework.http.ResponseEntity;\n" +
-                "import org.springframework.web.client.RestTemplate;\n\n" +
+                "import org.springframework.web.client.RestTemplate;\n" +
+                "import org.springframework.stereotype.Component;\n" +
                 "/**\n" +
                 " * JavaDelegate pour appeler des services REST externes.\n" +
                 " * Il récupère l'URL, la méthode et les données à envoyer à partir des variables du processus,\n" +
