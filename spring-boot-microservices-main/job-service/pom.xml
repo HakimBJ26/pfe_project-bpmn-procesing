@@ -182,6 +182,13 @@
             <scope>test</scope>
         </dependency>
         
+        <!-- Base de données H2 pour les tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- Mockito pour les tests -->
         <dependency>
             <groupId>org.mockito</groupId>
