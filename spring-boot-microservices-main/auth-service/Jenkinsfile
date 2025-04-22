@@ -11,7 +11,9 @@ pipeline {
         }
         stage('Build auth-service') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                dir('auth-service') {
+                    sh 'mvn clean package -DskipTests'
+                }
             }
         }
     }
