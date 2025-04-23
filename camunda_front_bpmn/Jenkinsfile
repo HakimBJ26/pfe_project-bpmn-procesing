@@ -11,9 +11,22 @@ pipeline {
         }
         stage('Build camunda_front_bpmn') {
             steps {
-                sh 'npm install'
-                sh 'npm run build'
+                dir('camunda_front_bpmn') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Frontend build completed successfully!'
+        }
+        failure {
+            echo 'Frontend build failed!'
         }
     }
 }
