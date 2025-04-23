@@ -16,6 +16,18 @@ pipeline {
                 }
             }
         }
+        stage('Unit Tests') {
+            steps {
+                dir('spring-boot-microservices-main/auth-service') {
+                    sh 'mvn test -Dspring.profiles.active=test'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
     }
     post {
         always {
