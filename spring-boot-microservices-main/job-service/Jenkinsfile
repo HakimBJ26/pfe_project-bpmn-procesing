@@ -19,7 +19,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 dir('spring-boot-microservices-main/job-service') {
-                    sh 'mvn test'
+                    sh 'mvn test -Dspring.profiles.active=test'
                 }
             }
             post {
