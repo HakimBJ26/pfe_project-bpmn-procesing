@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build camunda-service') {
+            steps {
+                dir('spring-boot-microservices-main/camunda-service') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        stage('Unit Tests') {
+            steps {
+                dir('spring-boot-microservices-main/camunda-service') {
+                    sh 'mvn test -Dspring.profiles.active=test'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

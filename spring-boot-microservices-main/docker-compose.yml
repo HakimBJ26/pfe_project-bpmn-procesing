@@ -55,6 +55,33 @@ services:
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9093
       - KAFKA_CLUSTERS_0_ZOOKEEPER=localhost:2181
 
+  camunda-service:
+    container_name: camunda-service
+    build:
+      context: ./camunda-service
+      dockerfile: Dockerfile
+    ports:
+      - "8998:8998"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/camunda_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - EUREKA_CLIENT_ENABLED=false
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:file:./
+      - SPRING_FLYWAY_ENABLED=false
+      - CAMUNDA_BPM_WEBAPP_ENABLED=true
+      - CAMUNDA_BPM_DATABASE_SCHEMA_UPDATE=true
+      - CAMUNDA_BPM_DATABASE_TYPE=mysql
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQL8Dialect
+    depends_on:
+      - mysql
+    restart: on-failure
+
 volumes:
   zookeeper_data:
     driver: local
@@ -62,4 +89,3 @@ volumes:
     driver: local
   mysql_data:  
     driver: local
-    
