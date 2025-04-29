@@ -6,7 +6,15 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [[$class: 'GitLFSPull', gitLfsEnabled: false]],
+                    userRemoteConfigs: [[
+                        credentialsId: 'github-pat', 
+                        url: 'https://github.com/HakimBJ26/pfe_project-bpmn-procesing.git'
+                    ]]
+                ])
             }
         }
         stage('Build auth-service') {
