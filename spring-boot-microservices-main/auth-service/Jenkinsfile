@@ -28,6 +28,20 @@ pipeline {
                 }
             }
         }
+        stage('Build Docker Image') {
+            steps {
+                dir('spring-boot-microservices-main/auth-service') {
+                    sh 'docker build -t auth-service:latest .'
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                echo 'Push to Docker registry can be configured here'
+                // sh 'docker tag auth-service:latest your-registry/auth-service:latest'
+                // sh 'docker push your-registry/auth-service:latest'
+            }
+        }
     }
     post {
         always {
