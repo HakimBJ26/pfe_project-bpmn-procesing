@@ -4,15 +4,15 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, sidebarOpen, toggleSidebar }) => {
   const { user } = useAuth();
   const theme = useTheme();
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <CssBaseline />
-      <Navbar />
-      {user && <Sidebar />}
+      <Navbar toggleSidebar={toggleSidebar} />
+      <Sidebar open={sidebarOpen} />
       <Box
         component="main"
         sx={{

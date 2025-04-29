@@ -1,0 +1,195 @@
+.bpmn-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.bpmn-editor-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #d9d9d9;
+  z-index: 100;
+}
+
+.workflow-title-input {
+  width: 300px;
+}
+
+.bpmn-editor-content {
+  display: flex;
+  flex: 1;
+  height: calc(100% - 60px);
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Styles pour le panneau de configuration d'éléments */
+.element-config-panel {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 350px;
+  max-height: calc(100% - 20px);
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  background-color: white;
+}
+
+.element-config-panel .ant-card-head {
+  background-color: #1890ff;
+  color: white;
+}
+
+.element-config-panel .ant-card-head-title {
+  color: white;
+}
+
+.element-config-panel .ant-collapse {
+  margin-bottom: 16px;
+}
+
+.element-config-panel .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.element-config-panel .ant-btn {
+  width: 100%;
+}
+
+/* Styles pour les éléments sélectionnés */
+.djs-selection-outline {
+  stroke: #1890ff !important;
+  stroke-width: 2px !important;
+}
+
+.djs-shape.selected .djs-visual > :nth-child(1) {
+  stroke: #1890ff !important;
+  stroke-width: 2px !important;
+}
+
+.djs-connection.selected .djs-visual > :nth-child(1) {
+  stroke: #1890ff !important;
+  stroke-width: 2px !important;
+}
+
+/* Styles pour les tooltips dans le modélisateur */
+.djs-tooltip {
+  background-color: #fff !important;
+  border: 1px solid #d9d9d9 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  padding: 5px 10px !important;
+  border-radius: 2px !important;
+}
+
+/* Styles pour les contexte menus */
+.djs-context-pad {
+  background-color: #fff !important;
+  border: 1px solid #d9d9d9 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Styles pour la palette */
+.djs-palette {
+  background-color: #f9f9f9 !important;
+  border-color: #d9d9d9 !important;
+  left: 10px !important;
+  top: 10px !important;
+}
+
+.djs-palette-entries {
+  margin-top: 5px !important;
+}
+
+/* Styles pour les modales */
+.ant-modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .element-config-panel {
+    width: 280px;
+  }
+  
+  .workflow-title-input {
+    width: 200px;
+  }
+}
+
+.properties-panel {
+  width: 300px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: #f8f8f8;
+  padding: 10px;
+}
+
+/* Styles pour le panneau de propriétés */
+.properties-panel label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.properties-panel input,
+.properties-panel select,
+.properties-panel textarea {
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+/* Styles pour les groupes de propriétés */
+.properties-panel .group {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.properties-panel .group-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Styles supplémentaires pour le panel de propriétés Camunda */
+.bpp-properties-panel {
+  padding: 10px !important;
+}
+
+.bpp-properties-panel [data-entry] input,
+.bpp-properties-panel [data-entry] select,
+.bpp-properties-panel [data-entry] textarea {
+  background-color: #fff !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 2px !important;
+  padding: 4px 11px !important;
+}
+
+.bpp-properties-panel [data-entry] input:focus,
+.bpp-properties-panel [data-entry] select:focus,
+.bpp-properties-panel [data-entry] textarea:focus {
+  border-color: #1890ff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.bpp-properties-panel [data-entry] button {
+  background-color: #f0f0f0 !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 2px !important;
+}
+
+.bpp-properties-panel [data-entry] button:hover {
+  background-color: #e0e0e0 !important;
+} 

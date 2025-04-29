@@ -1,24 +1,32 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ConfigProvider } from 'antd';
+import frFR from 'antd/lib/locale/fr_FR';
+import { SnackbarProvider } from 'notistack';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { SnackbarProvider } from 'notistack';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from './theme/theme'; 
+
+// Configuration du thème Ant Design
+const theme = {
+  token: {
+    colorPrimary: '#1890ff',
+    borderRadius: 4,
+  },
+};
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <SnackbarProvider 
-        maxSnack={3} 
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        autoHideDuration={5000}
-      >
+    <SnackbarProvider 
+      maxSnack={3} 
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      autoHideDuration={5000}
+    >
+      <ConfigProvider locale={frFR} theme={theme}>
         <App />
-      </SnackbarProvider>
-    </ThemeProvider>
+      </ConfigProvider>
+    </SnackbarProvider>
   </React.StrictMode>
 );
 

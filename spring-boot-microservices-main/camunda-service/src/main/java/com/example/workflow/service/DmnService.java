@@ -83,4 +83,4 @@ public class DmnService {
             throw new RuntimeException("Failed to read DMN content", e);
         }
     }
-} 
+}

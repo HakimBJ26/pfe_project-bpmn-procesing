@@ -9,16 +9,16 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build camunda-service') {
+        stage('Build auth-service') {
             steps {
-                dir('spring-boot-microservices-main/camunda-service') {
+                dir('spring-boot-microservices-main/auth-service') {
                     sh 'mvn clean package -DskipTests'
                 }
             }
         }
         stage('Unit Tests') {
             steps {
-                dir('spring-boot-microservices-main/camunda-service') {
+                dir('spring-boot-microservices-main/auth-service') {
                     sh 'mvn test -Dspring.profiles.active=test'
                 }
             }
@@ -30,16 +30,16 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                dir('spring-boot-microservices-main/camunda-service') {
-                    sh 'docker build -t camunda-service:latest .'
+                dir('spring-boot-microservices-main/auth-service') {
+                    sh 'docker build -t auth-service:latest .'
                 }
             }
         }
         stage('Push Docker Image') {
             steps {
                 echo 'Push to Docker registry can be configured here'
-                // sh 'docker tag camunda-service:latest your-registry/camunda-service:latest'
-                // sh 'docker push your-registry/camunda-service:latest'
+                // sh 'docker tag auth-service:latest your-registry/auth-service:latest'
+                // sh 'docker push your-registry/auth-service:latest'
             }
         }
     }

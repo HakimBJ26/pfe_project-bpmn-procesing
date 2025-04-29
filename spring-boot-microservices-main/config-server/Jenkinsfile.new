@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build config-server') {
+            steps {
+                dir('spring-boot-microservices-main/config-server') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                dir('spring-boot-microservices-main/config-server') {
+                    sh 'docker build -t config-server:latest .'
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                echo 'Push to Docker registry can be configured here'
+                // sh 'docker tag config-server:latest your-registry/config-server:latest'
+                // sh 'docker push your-registry/config-server:latest'
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

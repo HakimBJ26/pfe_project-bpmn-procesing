@@ -96,4 +96,4 @@ public class DmnController {
         dmnService.deleteDmn(id);
         return ResponseEntity.ok().build();
     }
-} 
+}

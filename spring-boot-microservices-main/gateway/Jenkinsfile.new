@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build gateway') {
+            steps {
+                dir('spring-boot-microservices-main/gateway') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                dir('spring-boot-microservices-main/gateway') {
+                    sh 'docker build -t gateway:latest .'
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                echo 'Push to Docker registry can be configured here'
+                // sh 'docker tag gateway:latest your-registry/gateway:latest'
+                // sh 'docker push your-registry/gateway:latest'
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

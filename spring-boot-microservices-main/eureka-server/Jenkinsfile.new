@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build eureka-server') {
+            steps {
+                dir('spring-boot-microservices-main/eureka-server') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                dir('spring-boot-microservices-main/eureka-server') {
+                    sh 'docker build -t eureka-server:latest .'
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                echo 'Push to Docker registry can be configured here'
+                // sh 'docker tag eureka-server:latest your-registry/eureka-server:latest'
+                // sh 'docker push your-registry/eureka-server:latest'
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

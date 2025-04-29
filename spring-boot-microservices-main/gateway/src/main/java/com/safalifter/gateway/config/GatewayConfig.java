@@ -35,6 +35,10 @@ public class GatewayConfig {
                 .route("file-storage", r -> r.path("/v1/file-storage/**")
                         .filters(f -> f.filter(filter))
                         .uri("lb://file-storage"))
+                .route("camunda-service", r -> r.path("/v1/camunda-service/**")
+                        .filters(f -> f.filter(filter))
+                        .uri("lb://camunda-service"))       
+
                 .build();
     }
 }

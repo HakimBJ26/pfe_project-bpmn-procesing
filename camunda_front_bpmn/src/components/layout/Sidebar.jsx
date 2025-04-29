@@ -29,7 +29,8 @@ import {
   TableChart,
   List as ListIcon,
   History,
-  Assignment
+  Assignment,
+  Rule
 } from '@mui/icons-material';
 import { useState } from 'react';
 
@@ -46,19 +47,12 @@ const Sidebar = ({ open }) => {
   const adminLinks = [
     { to: '/admin', label: 'Dashboard', icon: <Dashboard /> },
     { to: '/admin/users', label: 'User Management', icon: <People /> },
-    { to: 'bpmn-modeler', label: 'Designer', icon: <TableChart /> },
-    { to: '/process/start', label: 'Démarrer un processus', icon: <PlayArrow /> },
-    { to: '/tasks', label: 'Mes tâches', icon: <Assignment /> },
-    { to: '/processes', label: 'Process', icon: <TableChart /> },
-    { to: '/run/:processId', label: 'run', icon: <TableChart /> },
-    { to: '/dmn-modeler', label: 'DMN Manager', icon: <Edit /> },
-    { to: '/dmn-history', label: 'Historique DMN', icon: <History /> }
+    
   ];
 
   const userLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: <Dashboard /> },
-    { to: '/process/start', label: 'Démarrer un processus', icon: <PlayArrow /> },
-    { to: '/tasks', label: 'Mes tâches', icon: <Assignment /> },
+    
   ];
 
   const links = user?.role === 'ROLE_ADMIN' ? adminLinks : userLinks;
