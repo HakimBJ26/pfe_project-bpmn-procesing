@@ -11,7 +11,7 @@ pipeline {
         }
         stage('Build job-service') {
             steps {
-                dir('spring-boot-microservices-main/job-service') {
+                dir('job-service') {
                     sh 'mvn clean compile'
                 }
             }
