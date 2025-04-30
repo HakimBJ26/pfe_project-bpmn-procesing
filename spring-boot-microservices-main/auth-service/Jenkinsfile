@@ -20,7 +20,7 @@ pipeline {
         
         stage('Compilation') {
             steps {
-                dir('spring-boot-microservices-main/auth-service') {
+                dir('auth-service') {
                     sh 'mvn clean compile -Dspring.cloud.config.enabled=false'
                 }
             }
