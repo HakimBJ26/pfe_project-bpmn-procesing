@@ -1,11 +1,6 @@
 pipeline {
     agent any
     
-    // Désactiver Git LFS globalement pour ce pipeline
-    environment {
-        GIT_LFS_SKIP_SMUDGE = '1'  // Variable d'environnement qui dit à Git d'ignorer LFS
-    }
-    
     tools {
         maven 'Maven3'
     }
@@ -13,60 +8,27 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Configuration du checkout sans Git LFS
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    extensions: [
-                        // Supprimer complètement GitLFSPull et ajouter des options pour éviter LFS
-                        [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]
-                    ],
-                    userRemoteConfigs: [[
-                        credentialsId: 'github-pat', 
-                        url: 'https://github.com/HakimBJ26/pfe_project-bpmn-procesing.git'
-                    ]]
-                ])
-                
-                // Commande supplémentaire pour s'assurer que LFS est désactivé après le checkout
-                sh 'git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"'
-                sh 'git config --global filter.lfs.process "git-lfs filter-process --skip"'
+                // Checkout simple
+                checkout scm
             }
         }
         
-        stage('Build auth-service') {
+        stage('Build') {
             steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn clean package -DskipTests'
-                }
+                // Simple build sans tests
+                sh 'mvn clean compile -DskipTests'
             }
         }
         
-        stage('Unit Tests') {
+        stage('Test Unitaires') {
             steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn test -Dspring.profiles.active=test'
-                }
+                // Tests avec profil test pour éviter les problèmes de connexion au Config Server
+                sh 'mvn test -Dspring.profiles.active=test'
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
                 }
-            }
-        }
-        
-        stage('Build Docker Image') {
-            steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'docker build -t auth-service:latest .'
-                }
-            }
-        }
-        
-        stage('Push Docker Image') {
-            steps {
-                echo 'Push to Docker registry can be configured here'
-                // sh 'docker tag auth-service:latest your-registry/auth-service:latest'
-                // sh 'docker push your-registry/auth-service:latest'
             }
         }
     }
@@ -76,10 +38,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline terminée avec succès!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Pipeline échouée!'
         }
     }
 }
