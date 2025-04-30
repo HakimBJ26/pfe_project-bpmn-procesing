@@ -1,47 +1,50 @@
 pipeline {
     agent any
-    
     tools {
         maven 'Maven3'
     }
-    
     stages {
         stage('Checkout') {
             steps {
-                // Checkout simple
                 checkout scm
             }
         }
-        
-        stage('Build') {
+        stage('Build auth-service') {
             steps {
-                // Simple build sans tests
-                sh 'mvn clean compile -DskipTests'
+                dir('spring-boot-microservices-main/auth-service') {
+                    sh 'mvn clean compile'
+                }
             }
         }
-        
-        stage('Test Unitaires') {
+        stage('Unit Tests') {
             steps {
-                // Tests avec profil test pour éviter les problèmes de connexion au Config Server
-                sh 'mvn test -Dspring.profiles.active=test'
+                dir('spring-boot-microservices-main/auth-service') {
+                    sh 'mvn test -Dspring.profiles.active=test'
+                }
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Package') {
+            steps {
+                dir('spring-boot-microservices-main/auth-service') {
+                    sh 'mvn package -DskipTests'
                 }
             }
         }
     }
-    
     post {
         always {
             cleanWs()
         }
         success {
-            echo 'Pipeline terminée avec succès!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline échouée!'
+            echo 'Pipeline failed!'
         }
     }
 }
