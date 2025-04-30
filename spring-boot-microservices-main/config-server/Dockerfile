@@ -24,7 +24,7 @@ COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /app/config
 
 # Copy the config files if needed
-COPY ../config /app/config/
+# COPY ../config /app/config/
 
 # Create application.properties for standalone mode
 RUN echo "spring.application.name=config-server" > /app/application.properties && \
