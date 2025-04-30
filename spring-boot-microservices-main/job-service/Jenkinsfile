@@ -11,8 +11,8 @@ pipeline {
         }
         stage('Build job-service') {
             steps {
-                dir('job-service') {
-                    sh 'mvn clean compile'
+                dir('spring-boot-microservices-main/job-service') {
+                    sh 'mvn clean compile -Dorg.jenkinsci.plugins.durabletask.BourneShellScript.LAUNCH_DIAGNOSTICS=true'
                 }
             }
         }

@@ -1,21 +1,46 @@
 pipeline {
     agent any
+    
+    // Désactiver Git LFS globalement pour ce pipeline
+    environment {
+        GIT_LFS_SKIP_SMUDGE = '1'  // Variable d'environnement qui dit à Git d'ignorer LFS
+    }
+    
     tools {
         maven 'Maven3'
     }
+    
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                // Configuration du checkout sans Git LFS
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [
+                        // Supprimer complètement GitLFSPull et ajouter des options pour éviter LFS
+                        [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]
+                    ],
+                    userRemoteConfigs: [[
+                        credentialsId: 'github-pat', 
+                        url: 'https://github.com/HakimBJ26/pfe_project-bpmn-procesing.git'
+                    ]]
+                ])
+                
+                // Commande supplémentaire pour s'assurer que LFS est désactivé après le checkout
+                sh 'git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"'
+                sh 'git config --global filter.lfs.process "git-lfs filter-process --skip"'
             }
         }
+        
         stage('Build auth-service') {
             steps {
                 dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn clean compile'
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }
+        
         stage('Unit Tests') {
             steps {
                 dir('spring-boot-microservices-main/auth-service') {
@@ -24,18 +49,28 @@ pipeline {
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
                 }
             }
         }
-        stage('Package') {
+        
+        stage('Build Docker Image') {
             steps {
                 dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn package -DskipTests'
+                    sh 'docker build -t auth-service:latest .'
                 }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                echo 'Push to Docker registry can be configured here'
+                // sh 'docker tag auth-service:latest your-registry/auth-service:latest'
+                // sh 'docker push your-registry/auth-service:latest'
             }
         }
     }
+    
     post {
         always {
             cleanWs()
