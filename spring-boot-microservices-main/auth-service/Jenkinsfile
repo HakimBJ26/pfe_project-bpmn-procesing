@@ -1,17 +1,14 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.8.4-openjdk-17-slim'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
+    agent any
+    
+    tools {
+        maven 'Maven3'
+        jdk 'JDK17'
     }
 
     environment {
-        DOCKER_REGISTRY = 'localhost:5000' 
-        IMAGE_NAME      = 'auth-service'
-        IMAGE_TAG       = "${BUILD_NUMBER}"
-        SONAR_URL       = 'http://sonarqube:9000'
-        SONAR_CREDS     = credentials('sonarqube-auth')
+        SONAR_URL = 'http://localhost:9000'
+        SONAR_CREDS = credentials('sonarqube-auth')
     }
 
     stages {
@@ -21,11 +18,28 @@ pipeline {
             }
         }
         
+        stage('Compilation') {
+            steps {
+                sh 'mvn clean compile -Dspring.cloud.config.enabled=false'
+            }
+        }
+        
+        stage('Tests') {
+            steps {
+                sh 'mvn test -Dspring.cloud.config.enabled=false'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh """
-                    mvn clean verify sonar:sonar \
+                    mvn sonar:sonar \
                     -Dsonar.projectKey=auth-service \
                     -Dsonar.projectName='Auth Service' \
                     -Dsonar.host.url=${SONAR_URL} \
@@ -46,33 +60,11 @@ pipeline {
                 }
             }
         }
-
-        stage('Build & Push Docker Image') {
-            steps {
-                script {
-                    sh 'apt-get update && apt-get install -y docker.io'
-                    
-                    sh """
-                    docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                    """
-                }
-            }
-        }
-
-        stage('Update Deployment') {
-            steps {
-                echo "Deploying ${IMAGE_NAME}:${IMAGE_TAG} to environment"
-                // sh "kubectl set image deployment/${IMAGE_NAME} ${IMAGE_NAME}=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n microservices"
-            }
-        }
     }
 
     post {
         success {
-            echo "Build successful! The ${IMAGE_NAME} service has been built and deployed."
+            echo "Build successful! SonarQube analysis completed."
         }
         failure {
             echo "Build failed! Check the logs for more information."
