@@ -1,9 +1,9 @@
 pipeline {
-    agent any
-
-    tools {
-        maven 'Maven3' // doit correspondre au nom de votre installation Maven dans Jenkins
-        jdk   'JDK17'  // idem pour le JDK
+    agent {
+        docker {
+            image 'maven:3.8.4-openjdk-17-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
     }
 
     environment {
@@ -48,22 +48,17 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry("http://${DOCKER_REGISTRY}", '') {
-                        def image = docker.image("${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
-                        image.push()
-                        image.push('latest')
-                    }
+                    // Installation de Docker client dans le conteneur Maven si nécessaire
+                    sh 'apt-get update && apt-get install -y docker.io'
+                    
+                    // Construction et push de l'image
+                    sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                    sh "docker tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
+                    sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                    sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
                 }
             }
         }
