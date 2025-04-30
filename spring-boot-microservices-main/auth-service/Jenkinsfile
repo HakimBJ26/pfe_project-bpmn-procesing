@@ -1,22 +1,38 @@
 pipeline {
     agent any
+    
+    // Désactiver Git LFS globalement pour ce pipeline
+    environment {
+        GIT_LFS_SKIP_SMUDGE = '1'  // Variable d'environnement qui dit à Git d'ignorer LFS
+    }
+    
     tools {
         maven 'Maven3'
     }
+    
     stages {
         stage('Checkout') {
             steps {
+                // Configuration du checkout sans Git LFS
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [[$class: 'GitLFSPull', gitLfsEnabled: false]],
+                    extensions: [
+                        // Supprimer complètement GitLFSPull et ajouter des options pour éviter LFS
+                        [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]
+                    ],
                     userRemoteConfigs: [[
                         credentialsId: 'github-pat', 
                         url: 'https://github.com/HakimBJ26/pfe_project-bpmn-procesing.git'
                     ]]
                 ])
+                
+                // Commande supplémentaire pour s'assurer que LFS est désactivé après le checkout
+                sh 'git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"'
+                sh 'git config --global filter.lfs.process "git-lfs filter-process --skip"'
             }
         }
+        
         stage('Build auth-service') {
             steps {
                 dir('spring-boot-microservices-main/auth-service') {
@@ -24,6 +40,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Unit Tests') {
             steps {
                 dir('spring-boot-microservices-main/auth-service') {
@@ -36,6 +53,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Build Docker Image') {
             steps {
                 dir('spring-boot-microservices-main/auth-service') {
@@ -43,6 +61,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Push Docker Image') {
             steps {
                 echo 'Push to Docker registry can be configured here'
@@ -51,6 +70,7 @@ pipeline {
             }
         }
     }
+    
     post {
         always {
             cleanWs()
