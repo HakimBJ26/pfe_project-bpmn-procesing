@@ -10,6 +10,8 @@ pipeline {
         DOCKER_REGISTRY = 'localhost:5000' 
         IMAGE_NAME      = 'auth-service'
         IMAGE_TAG       = "${BUILD_NUMBER}"
+        SONAR_URL       = 'http://sonarqube:9000'
+        SONAR_CREDS     = credentials('sonarqube-auth')
     }
 
     stages {
@@ -18,18 +20,44 @@ pipeline {
                 checkout scm
             }
         }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh """
+                    mvn clean verify sonar:sonar \
+                    -Dsonar.projectKey=auth-service \
+                    -Dsonar.projectName='Auth Service' \
+                    -Dsonar.host.url=${SONAR_URL} \
+                    -Dsonar.login=${SONAR_CREDS_USR} \
+                    -Dsonar.password=${SONAR_CREDS_PSW} \
+                    -Dsonar.java.coveragePlugin=jacoco \
+                    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                    -Dspring.cloud.config.enabled=false
+                    """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         stage('Build & Push Docker Image') {
             steps {
                 script {
-                    // Installation de Docker client dans le conteneur Maven si nécessaire
                     sh 'apt-get update && apt-get install -y docker.io'
                     
-                    // Construction et push de l'image
-                    sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
-                    sh "docker tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
-                    sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
-                    sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
+                    sh """
+                    docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+                    docker tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                    """
                 }
             }
         }
@@ -37,7 +65,6 @@ pipeline {
         stage('Update Deployment') {
             steps {
                 echo "Deploying ${IMAGE_NAME}:${IMAGE_TAG} to environment"
-                // Par exemple :
                 // sh "kubectl set image deployment/${IMAGE_NAME} ${IMAGE_NAME}=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n microservices"
             }
         }
