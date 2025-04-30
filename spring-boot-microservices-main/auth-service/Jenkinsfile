@@ -21,6 +21,7 @@ pipeline {
         
         stage('Build') {
             steps {
+                dir('spring-boot-microservices-main/auth-service') {
                 sh 'mvn clean compile'
             }
         }
