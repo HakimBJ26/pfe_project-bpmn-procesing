@@ -19,35 +19,6 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn clean compile'
-                }
-            }
-        }
-
-        stage('Test') {
-            steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn test -Dspring.cloud.config.enabled=false'
-                }
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
-            }
-        }
-
-        stage('Package') {
-            steps {
-                dir('spring-boot-microservices-main/auth-service') {
-                    sh 'mvn package -DskipTests'
-                }
-            }
-        }
-
         stage('Build & Push Docker Image') {
             steps {
                 script {
