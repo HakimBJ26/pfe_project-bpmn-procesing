@@ -37,7 +37,7 @@ const createWorkflow = async (workflowData) => {
     // S'assurer que les champs obligatoires sont présents
     const dataToSend = {
       title: workflowData.title,
-      workflowContent: workflowData.workflowContent,
+      content: workflowData.workflowContent,
       processId: workflowData.processId || 'Process_1',
       version: workflowData.version || 1,
       description: workflowData.description || `Workflow: ${workflowData.title}`,
@@ -73,7 +73,7 @@ const updateWorkflow = async (id, workflowData) => {
     // S'assurer que les champs obligatoires sont présents
     const dataToSend = {
       title: workflowData.title,
-      workflowContent: workflowData.workflowContent,
+      content: workflowData.workflowContent,
       processId: workflowData.processId || 'Process_1',
       version: workflowData.version || 1,
       description: workflowData.description || `Workflow: ${workflowData.title}`,

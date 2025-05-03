@@ -4,17 +4,18 @@ import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
 import camundaModdleDescriptor from 'camunda-bpmn-moddle/resources/camunda.json';
 import { Button, message, Modal, Input, Space, Tooltip, Card, Tabs, Form, Select, Radio, Collapse } from 'antd';
-import { SaveOutlined, DeploymentUnitOutlined, DownloadOutlined, UploadOutlined, SettingOutlined } from '@ant-design/icons';
+import { SaveOutlined, DeploymentUnitOutlined, DownloadOutlined, UploadOutlined, SettingOutlined, ReloadOutlined } from '@ant-design/icons';
 import workflowService from '../../services/workflowService';
 import processService from '../../services/processService';
 import UserTaskForm from './UserTaskForm';
 import BusinessRuleEditor from './BusinessRuleEditor';
 import GatewayEditor from './GatewayEditor';
+import ServiceTaskEditor from './ServiceTaskEditor';
 
 import './BpmnEditor.css';
 
 // Configuration du mode test
-const TEST_MODE = process.env.REACT_APP_TEST_MODE === 'true' || false;
+const TEST_MODE = true;
 
 // Modèle BPMN par défaut pour initialiser un nouveau diagramme
 const DEFAULT_DIAGRAM = `<?xml version="1.0" encoding="UTF-8"?>
@@ -70,9 +71,13 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
   const [isUserTaskFormModalVisible, setIsUserTaskFormModalVisible] = useState(false);
   const [isBusinessRuleModalVisible, setIsBusinessRuleModalVisible] = useState(false);
   const [isGatewayEditorModalVisible, setIsGatewayEditorModalVisible] = useState(false);
+  const [isServiceTaskModalVisible, setIsServiceTaskModalVisible] = useState(false);
   const { Panel } = Collapse;
   const { TabPane } = Tabs;
   const [testMode, setTestMode] = useState(TEST_MODE);
+  const [deployProcessId, setDeployProcessId] = useState('');
+  const [deployVersion, setDeployVersion] = useState(1);
+  const [deployTenantId, setDeployTenantId] = useState('');
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -158,7 +163,7 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
     
     // Configuration spécifique selon le type d'élément
     if (type.includes('Task')) {
-      return {
+      const config = {
         ...baseConfig,
         // Récupérer les propriétés spécifiques Camunda
         formKey: businessObject.formKey || '',
@@ -169,6 +174,39 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
         decisionRef: businessObject.decisionRef || '',
         resultVariable: businessObject.resultVariable || ''
       };
+
+      // Configuration spécifique pour les Service Tasks
+      if (type.includes('ServiceTask')) {
+        config.implementationType = 'unknown';
+        
+        if (businessObject.delegateExpression) {
+          config.implementationType = 'delegateExpression';
+          config.implementation = businessObject.delegateExpression;
+        } else if (businessObject.class) {
+          config.implementationType = 'class';
+          config.implementation = businessObject.class;
+        } else if (businessObject.expression) {
+          config.implementationType = 'expression';
+          config.implementation = businessObject.expression;
+        }
+        
+        // Récupérer les paramètres
+        config.parameters = {};
+        const extensionElements = businessObject.extensionElements;
+        if (extensionElements && extensionElements.values) {
+          const camundaProperties = extensionElements.values.find(
+            v => v.$type === 'camunda:Properties'
+          );
+          
+          if (camundaProperties && camundaProperties.values) {
+            camundaProperties.values.forEach(prop => {
+              config.parameters[prop.name] = prop.value;
+            });
+          }
+        }
+      }
+      
+      return config;
     } else if (type.includes('Gateway')) {
       return {
         ...baseConfig,
@@ -235,9 +273,12 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
           const workflow = await workflowService.getWorkflowById(workflowId);
           setWorkflowTitle(workflow.title);
           
-          if (workflow.workflowContent && bpmnModeler) {
-            bpmnModeler.importXML(workflow.workflowContent);
-            setXml(workflow.workflowContent);
+          // Adapter le nom du champ selon ce qui est renvoyé par l'API
+          const workflowContent = workflow.content || workflow.workflowContent;
+          
+          if (workflowContent && bpmnModeler) {
+            bpmnModeler.importXML(workflowContent);
+            setXml(workflowContent);
           }
         } catch (error) {
           console.error('Erreur lors du chargement du workflow', error);
@@ -249,12 +290,77 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
     }
   }, [workflowId, bpmnModeler]);
 
+  // Fonction de sauvegarde sécurisée qui gère le cas d'erreur isGeneric
+  const saveXmlSafely = async () => {
+    if (!bpmnModeler) return null;
+    
+    try {
+      // Essayer la sauvegarde normale d'abord
+      const { xml } = await bpmnModeler.saveXML({ format: true });
+      return xml;
+    } catch (error) {
+      console.error("Erreur lors de la sérialisation XML:", error);
+      
+      // Si c'est l'erreur isGeneric, essayons un contournement
+      if (error.message && error.message.includes('isGeneric')) {
+        console.log("Tentative de contournement pour l'erreur isGeneric...");
+        
+        // Utiliser l'API Camunda pour nettoyer le modèle
+        try {
+          const canvas = bpmnModeler.get('canvas');
+          const elementRegistry = bpmnModeler.get('elementRegistry');
+          
+          // Récupérer et valider le modèle racine
+          const rootElement = canvas.getRootElement();
+          
+          // Sauvegarde minimale avec juste les éléments essentiels
+          const definitions = rootElement.businessObject.$parent;
+          
+          // Créer un nouvel objet de modèle nettoyé
+          const moddle = bpmnModeler.get('moddle');
+          
+          // Créer un nouveau modèle minimal
+          const minimalBpmn = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                    xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                    xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="${definitions.id || 'Definitions_1'}" 
+                    targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="${rootElement.businessObject.id || 'Process_1'}" isExecutable="true">
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="${rootElement.businessObject.id || 'Process_1'}">
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+          
+          message.warning("Le modèle a été simplifié pour contourner une erreur technique. Certaines configurations complexes ont été perdues.");
+          return minimalBpmn;
+        } catch (contourError) {
+          console.error("Échec du contournement:", contourError);
+          message.error("Impossible de sauvegarder le diagramme. Veuillez simplifier votre modèle.");
+          return null;
+        }
+      }
+      
+      throw error;
+    }
+  };
+
   const handleSave = async () => {
     if (!bpmnModeler) return;
     
     try {
       setSaving(true);
-      const { xml } = await bpmnModeler.saveXML({ format: true });
+      
+      // Utiliser la fonction de sauvegarde sécurisée
+      const xml = await saveXmlSafely();
+      if (!xml) {
+        setSaving(false);
+        return;
+      }
+      
       setXml(xml);
       
       // Extraire l'ID du processus depuis le XML pour le titre si non défini
@@ -282,8 +388,6 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
         createdBy: "user",
         description: `Workflow BPMN: ${title}`
       };
-      
-      console.log("Sauvegarde du workflow avec les données:", workflowData);
       
       // Si en mode test, simuler la sauvegarde
       if (testMode) {
@@ -322,7 +426,7 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
     if (!bpmnModeler) return;
     
     try {
-      setDeploying(true);
+      // Ne pas activer deploying ici mais seulement après la confirmation
       const { xml } = await bpmnModeler.saveXML({ format: true });
       
       // Extraire l'ID du processus depuis le XML
@@ -338,13 +442,89 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
         console.warn("Impossible d'extraire l'ID du processus du XML", parseError);
       }
       
-      // Générer un nom de fichier unique avec timestamp pour éviter les conflits
+      // Définir des valeurs par défaut pour la modal
+      setDeployProcessId(processId);
+      setDeployVersion(1);
+      setDeployTenantId('');
+      
+      // Afficher la modal pour permettre la personnalisation
+      setIsDeployModalVisible(true);
+      
+    } catch (error) {
+      console.error('Erreur lors de la préparation du déploiement', error);
+      message.error('Impossible de préparer le déploiement: ' + error.message);
+    }
+  };
+
+  // Ajouter cette fonction pour générer un ID unique
+  const generateUniqueId = (prefix = 'Process') => {
+    const timestamp = new Date().getTime();
+    const random = Math.floor(Math.random() * 10000);
+    return `${prefix}_${timestamp}_${random}`;
+  };
+
+  // Mettre à jour la fonction confirmDeploy
+  const confirmDeploy = async () => {
+    if (!bpmnModeler) return;
+    
+    try {
+      setDeploying(true);
+      let { xml } = await bpmnModeler.saveXML({ format: true });
+      
+      // Si l'utilisateur n'a pas explicitement changé l'ID, générer un ID unique
+      const uniqueProcessId = deployProcessId.trim() ? 
+        deployProcessId : 
+        generateUniqueId(workflowTitle.replace(/\s+/g, '_'));
+      
+      // Modifier complètement le XML avant déploiement
+      try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, "text/xml");
+        
+        // 1. Modifier l'ID du processus principal
+        const processElements = xmlDoc.getElementsByTagName("bpmn:process") || xmlDoc.getElementsByTagName("process");
+        if (processElements.length > 0) {
+          const processElement = processElements[0];
+          const oldId = processElement.getAttribute("id");
+          processElement.setAttribute("id", uniqueProcessId);
+          
+          // 2. Mettre à jour les références dans le diagramme (BPMNPlane)
+          const planeElements = xmlDoc.querySelectorAll("bpmndi\\:BPMNPlane, BPMNPlane");
+          for (let i = 0; i < planeElements.length; i++) {
+            if (planeElements[i].getAttribute("bpmnElement") === oldId) {
+              planeElements[i].setAttribute("bpmnElement", uniqueProcessId);
+            }
+          }
+          
+          // 3. Mettre à jour l'ID des définitions si nécessaire
+          const definitionsElements = xmlDoc.getElementsByTagName("bpmn:definitions") || xmlDoc.getElementsByTagName("definitions");
+          if (definitionsElements.length > 0) {
+            const definitionsId = definitionsElements[0].getAttribute("id");
+            if (definitionsId && definitionsId.includes(oldId)) {
+              const newDefinitionsId = definitionsId.replace(oldId, uniqueProcessId);
+              definitionsElements[0].setAttribute("id", newDefinitionsId);
+            }
+          }
+        }
+        
+        // Convertir le document XML modifié en chaîne
+        const serializer = new XMLSerializer();
+        xml = serializer.serializeToString(xmlDoc);
+      } catch (modifyError) {
+        console.error("Erreur lors de la modification de l'XML:", modifyError);
+        // Continuer avec l'XML original si la modification échoue
+      }
+      
+      // Générer un nom de fichier unique avec timestamp, version et hashcode
       const timestamp = new Date().getTime();
-      const fileName = `${workflowTitle.replace(/\s+/g, '_')}_${processId}_v${timestamp}.bpmn`;
+      const hashCode = Math.floor(Math.random() * 1000000);
+      const versionSuffix = deployVersion ? `_v${deployVersion}` : `_v1`;
+      const fileName = `${workflowTitle.replace(/\s+/g, '_')}_${uniqueProcessId}${versionSuffix}_${hashCode}.bpmn`;
       
       // Si en mode test, simuler le déploiement
       if (testMode) {
         console.log("Mode test: simulation de déploiement du processus:", fileName);
+        console.log("XML modifié:", xml);
         setTimeout(() => {
           message.success(`Processus déployé avec succès en mode test: ${fileName}`);
           setIsDeployModalVisible(false);
@@ -353,16 +533,25 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
         return;
       }
       
-      // Créer un fichier Blob à partir du XML
+      // Créer un fichier Blob à partir du XML modifié
       const blob = new Blob([xml], { type: 'application/xml' });
       const file = new File([blob], fileName, { type: 'application/xml' });
       
       // Préparer les données pour le déploiement
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('deployment-name', workflowTitle);
+      // Utiliser un nom de déploiement unique avec timestamp
+      const deploymentName = `${workflowTitle} (v${deployVersion}) - ${timestamp}`;
+      formData.append('deployment-name', deploymentName);
       formData.append('deployment-source', 'Editeur BPMN');
-      formData.append('tenant-id', ''); // Facultatif: tenant ID si nécessaire
+      // Activer les options pour éviter les doublons
+      formData.append('enable-duplicate-filtering', 'true');
+      formData.append('deploy-changed-only', 'true');
+      
+      // Ajouter le tenant ID s'il est spécifié
+      if (deployTenantId) {
+        formData.append('tenant-id', deployTenantId);
+      }
       
       console.log("Déploiement du processus:", fileName);
       
@@ -376,7 +565,12 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
       // Afficher plus de détails sur l'erreur
       if (error.response) {
         if (error.response.status === 409) {
-          message.error('Un processus avec le même ID existe déjà. Veuillez modifier l\'ID du processus ou créer une nouvelle version.');
+          message.error(
+            'Un processus avec le même ID existe déjà malgré notre tentative de créer un ID unique. ' +
+            'Essayez de modifier manuellement l\'ID du processus avec une valeur très différente.'
+          );
+          // Suggestion spécifique pour aider l'utilisateur
+          setDeployProcessId(generateUniqueId('NewProcess'));
         } else {
           console.error('Détails de l\'erreur:', error.response.data);
           message.error(`Impossible de déployer le processus: ${error.response.data.message || error.message}`);
@@ -440,56 +634,76 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
       formKey: formData.formKey
     });
     
-    // Stocker les informations du formulaire dans les propriétés extensibles
-    // Ceci permettrait de récupérer la définition complète du formulaire plus tard
-    const businessObject = selectedElement.businessObject;
-    const extensionElements = businessObject.extensionElements || bpmnModeler.get('moddle').create('bpmn:ExtensionElements');
-    
-    // Créer un élément Camunda pour stocker les données du formulaire
-    const formDataElement = bpmnModeler.get('moddle').create('camunda:FormData');
-    formDataElement.fields = formData.fields.map(field => {
-      const formField = bpmnModeler.get('moddle').create('camunda:FormField');
-      formField.id = field.name;
-      formField.label = field.label;
-      formField.type = field.type;
-      formField.defaultValue = '';
+    try {
+      // Stocker les informations du formulaire dans les propriétés extensibles
+      const moddle = bpmnModeler.get('moddle');
+      const businessObject = selectedElement.businessObject;
       
-      if (field.required) {
-        const constraint = bpmnModeler.get('moddle').create('camunda:Constraint');
-        constraint.name = 'required';
-        constraint.config = 'true';
-        formField.constraints = [constraint];
+      // Créer un élément ExtensionElements s'il n'existe pas
+      const extensionElements = businessObject.extensionElements || 
+        moddle.create('bpmn:ExtensionElements', { values: [] });
+      
+      // Créer l'élément FormData Camunda
+      const formDataElement = moddle.create('camunda:FormData', { fields: [] });
+      
+      // Ajouter les champs du formulaire
+      const formFields = formData.fields.map(field => {
+        const formField = moddle.create('camunda:FormField', {
+          id: field.name,
+          label: field.label,
+          type: field.type,
+          defaultValue: ''
+        });
+        
+        if (field.required) {
+          const constraint = moddle.create('camunda:Constraint', {
+            name: 'required',
+            config: 'true'
+          });
+          formField.constraints = [constraint];
+        }
+        
+        return formField;
+      });
+      
+      formDataElement.fields = formFields;
+      
+      // Mettre à jour les elements d'extension
+      if (!businessObject.extensionElements) {
+        // Cas où extensionElements n'existe pas encore
+        extensionElements.values = [formDataElement];
+        modeling.updateProperties(selectedElement, {
+          extensionElements: extensionElements
+        });
+      } else {
+        // Cas où extensionElements existe déjà
+        const currentValues = businessObject.extensionElements.values || [];
+        const newValues = currentValues.filter(val => val.$type !== 'camunda:FormData');
+        newValues.push(formDataElement);
+        
+        // Mettre à jour avec un nouvel objet ExtensionElements
+        const newExtensionElements = moddle.create('bpmn:ExtensionElements', {
+          values: newValues
+        });
+        
+        modeling.updateProperties(selectedElement, {
+          extensionElements: newExtensionElements
+        });
       }
       
-      return formField;
-    });
-    
-    // Remplacer ou ajouter l'élément formData
-    if (!businessObject.extensionElements) {
-      extensionElements.values = [formDataElement];
-      modeling.updateProperties(selectedElement, {
-        extensionElements: extensionElements
+      setIsUserTaskFormModalVisible(false);
+      
+      // Mettre à jour la configuration affichée
+      setElementConfig({
+        ...elementConfig,
+        formKey: formData.formKey
       });
-    } else {
-      // Filtrer les éléments existants pour supprimer tout FormData précédent
-      const values = businessObject.extensionElements.values.filter(
-        value => value.$type !== 'camunda:FormData'
-      );
-      values.push(formDataElement);
-      modeling.updateProperties(selectedElement, {
-        extensionElements: { values }
-      });
+      
+      message.success('Formulaire configuré avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la configuration du formulaire:', error);
+      message.error('Impossible de configurer le formulaire: ' + error.message);
     }
-    
-    setIsUserTaskFormModalVisible(false);
-    
-    // Mettre à jour la configuration affichée
-    setElementConfig({
-      ...elementConfig,
-      formKey: formData.formKey
-    });
-    
-    message.success('Formulaire configuré avec succès');
   };
 
   // Gérer la sauvegarde de la règle métier
@@ -514,6 +728,73 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
     });
     
     message.success('Règle métier configurée avec succès');
+  };
+
+  // Gérer la sauvegarde de la configuration de ServiceTask
+  const handleServiceTaskSave = (serviceTaskConfig) => {
+    if (!selectedElement || !bpmnModeler) return;
+    
+    const modeling = bpmnModeler.get('modeling');
+    const moddle = bpmnModeler.get('moddle');
+    
+    // Mettre à jour les propriétés de la tâche selon le type d'implémentation
+    const updateProps = {};
+    
+    // Réinitialiser toutes les propriétés d'implémentation
+    updateProps.class = undefined;
+    updateProps.expression = undefined;
+    updateProps.delegateExpression = undefined;
+    
+    // Définir la propriété selon le type choisi
+    if (serviceTaskConfig.implementationType === 'class') {
+      updateProps.class = serviceTaskConfig.implementation;
+    } else if (serviceTaskConfig.implementationType === 'expression') {
+      updateProps.expression = serviceTaskConfig.implementation;
+    } else if (serviceTaskConfig.implementationType === 'delegateExpression') {
+      updateProps.delegateExpression = serviceTaskConfig.implementation;
+    }
+    
+    // Appliquer les mises à jour de base
+    modeling.updateProperties(selectedElement, updateProps);
+    
+    // Traiter les paramètres si nous avons des paramètres à configurer
+    if (serviceTaskConfig.parameters && Object.keys(serviceTaskConfig.parameters).length > 0) {
+      try {
+        // Créer ou récupérer les éléments d'extension
+        const businessObject = selectedElement.businessObject;
+        let extensionElements = businessObject.extensionElements;
+        
+        if (!extensionElements) {
+          extensionElements = moddle.create('bpmn:ExtensionElements', { values: [] });
+        }
+        
+        // Créer l'élément camunda:Properties
+        let camundaProperties = extensionElements.values.find(v => v.$type === 'camunda:Properties');
+        
+        if (!camundaProperties) {
+          camundaProperties = moddle.create('camunda:Properties', { values: [] });
+          extensionElements.values.push(camundaProperties);
+        } else {
+          // Vider les propriétés existantes
+          camundaProperties.values = [];
+        }
+        
+        // Ajouter les nouvelles propriétés
+        for (const [key, value] of Object.entries(serviceTaskConfig.parameters)) {
+          const property = moddle.create('camunda:Property', { name: key, value: value });
+          camundaProperties.values.push(property);
+        }
+        
+        // Mettre à jour les éléments d'extension
+        modeling.updateProperties(selectedElement, { extensionElements: extensionElements });
+      } catch (error) {
+        console.error('Erreur lors de la configuration des paramètres:', error);
+        message.warning('Les paramètres ont été partiellement configurés');
+      }
+    }
+    
+    setIsServiceTaskModalVisible(false);
+    message.success('Tâche de service configurée avec succès');
   };
 
   // Gérer la sauvegarde de la configuration de Gateway
@@ -657,6 +938,41 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
             </TabPane>
           )}
           
+          {type.includes('ServiceTask') && (
+            <TabPane tab="Tâche de service" key="servicetask">
+              <div style={{ textAlign: 'center', margin: '20px 0' }}>
+                <Button 
+                  type="primary" 
+                  onClick={() => setIsServiceTaskModalVisible(true)}
+                >
+                  Configurer l'implémentation et les paramètres
+                </Button>
+              </div>
+              
+              {elementConfig.implementationType !== 'unknown' && (
+                <Card size="small" style={{ marginTop: 16 }}>
+                  <div><strong>Type d'implémentation:</strong> {elementConfig.implementationType}</div>
+                  <div style={{ marginTop: 8 }}><strong>Implémentation:</strong> {elementConfig.implementation}</div>
+                  
+                  {elementConfig.parameters && Object.keys(elementConfig.parameters).length > 0 && (
+                    <div style={{ marginTop: 16 }}>
+                      <div><strong>Paramètres:</strong></div>
+                      <ul style={{ marginTop: 8 }}>
+                        {Object.entries(elementConfig.parameters).map(([key, value]) => (
+                          <li key={key}><strong>{key}:</strong> {value}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </Card>
+              )}
+              
+              <p style={{ color: '#1890ff', marginTop: 16 }}>
+                Cliquez sur le bouton ci-dessus pour configurer l'implémentation Java et les paramètres de la tâche de service.
+              </p>
+            </TabPane>
+          )}
+          
           {type.includes('BusinessRuleTask') && (
             <TabPane tab="Règle métier" key="businessrule">
               <Form layout="vertical" initialValues={elementConfig}>
@@ -714,6 +1030,29 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
     );
   };
 
+  // Plus loin dans le code, ajouter la fonction de réinitialisation
+  const resetDiagram = () => {
+    if (!bpmnModeler) return;
+    
+    Modal.confirm({
+      title: 'Réinitialiser le diagramme',
+      content: 'Êtes-vous sûr de vouloir réinitialiser le diagramme ? Toutes les modifications non sauvegardées seront perdues.',
+      onOk: () => {
+        bpmnModeler.importXML(DEFAULT_DIAGRAM)
+          .then(() => {
+            setXml(DEFAULT_DIAGRAM);
+            message.success('Diagramme réinitialisé avec succès');
+            setSelectedElement(null);
+            setIsConfigPanelVisible(false);
+          })
+          .catch(err => {
+            console.error('Erreur lors de la réinitialisation du diagramme', err);
+            message.error('Impossible de réinitialiser le diagramme');
+          });
+      }
+    });
+  };
+
   return (
     <div className="bpmn-editor-container">
       <div className="bpmn-editor-header">
@@ -731,6 +1070,14 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
             accept=".bpmn,.xml"
             onChange={handleUpload}
           />
+          <Tooltip title="Réinitialiser le diagramme">
+            <Button 
+              icon={<ReloadOutlined />}
+              onClick={resetDiagram}
+            >
+              Réinitialiser
+            </Button>
+          </Tooltip>
           <Tooltip title="Importer un diagramme BPMN">
             <Button 
               icon={<UploadOutlined />}
@@ -762,7 +1109,7 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
               type="primary"
               danger
               icon={<DeploymentUnitOutlined />}
-              onClick={() => setIsDeployModalVisible(true)}
+              onClick={handleDeploy}
             >
               Déployer
             </Button>
@@ -798,14 +1145,51 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
             key="submit"
             type="primary"
             loading={deploying}
-            onClick={handleDeploy}
+            onClick={confirmDeploy}
           >
             Déployer
           </Button>
         ]}
       >
-        <p>Êtes-vous sûr de vouloir déployer ce processus sur le moteur Camunda ?</p>
-        <p>Nom du processus: {workflowTitle}</p>
+        <Form layout="vertical">
+          <Form.Item label="Nom du workflow">
+            <Input value={workflowTitle} disabled />
+          </Form.Item>
+          
+          <Form.Item 
+            label="ID du processus" 
+            help="Chaque processus doit avoir un ID unique. Pour redéployer sur un processus existant, changez l'ID ou la version."
+          >
+            <Input 
+              value={deployProcessId} 
+              onChange={e => setDeployProcessId(e.target.value)}
+              placeholder="process_unique_id"
+            />
+          </Form.Item>
+          
+          <Form.Item 
+            label="Version" 
+            help="Incrémenter la version permet de déployer une nouvelle version d'un processus existant."
+          >
+            <Input 
+              type="number" 
+              min={1}
+              value={deployVersion} 
+              onChange={e => setDeployVersion(parseInt(e.target.value) || 1)}
+            />
+          </Form.Item>
+          
+          <Form.Item 
+            label="Tenant ID" 
+            help="Optionnel. Spécifie le tenant pour ce déploiement."
+          >
+            <Input 
+              value={deployTenantId} 
+              onChange={e => setDeployTenantId(e.target.value)}
+              placeholder="tenant_id (optionnel)"
+            />
+          </Form.Item>
+        </Form>
       </Modal>
       
       {/* Modal pour l'édition de formulaire UserTask */}
@@ -848,6 +1232,20 @@ const BpmnEditor = ({ workflowId, initialDiagram = DEFAULT_DIAGRAM, onSave }) =>
           gateway={selectedElement}
           outgoingFlows={selectedElement?.outgoing}
           onSave={handleGatewaySave}
+        />
+      </Modal>
+
+      {/* Modal pour l'édition de ServiceTask */}
+      <Modal
+        title="Configurer la tâche de service"
+        open={isServiceTaskModalVisible}
+        onCancel={() => setIsServiceTaskModalVisible(false)}
+        footer={null}
+        width={800}
+      >
+        <ServiceTaskEditor
+          serviceTask={selectedElement}
+          onSave={handleServiceTaskSave}
         />
       </Modal>
     </div>

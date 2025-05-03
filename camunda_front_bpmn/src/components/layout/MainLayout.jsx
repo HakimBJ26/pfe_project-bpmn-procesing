@@ -11,6 +11,7 @@ import {
   SettingOutlined,
   UserOutlined,
   LogoutOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import './MainLayout.css';
 
@@ -60,6 +61,11 @@ const MainLayout = () => {
               key: '/forms',
               icon: <FormOutlined />,
               label: 'Formulaires',
+            },
+            {
+              key: '/test-workflow',
+              icon: <ExperimentOutlined />,
+              label: 'Tester Workflows',
             },
             {
               key: '/processes',

@@ -22,6 +22,9 @@ import NotFound from '../pages/error/NotFound';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 
+// Process Testing
+import ProcessTestPage from '../pages/ProcessTestPage';
+
 const AppRouter = () => {
   // Vérifier si l'utilisateur est authentifié (à adapter selon votre système d'authentification)
   const isAuthenticated = true; // Temporairement toujours true pour le développement
@@ -74,6 +77,8 @@ const AppRouter = () => {
         {/* Routes en dehors du layout principal */}
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<Navigate to="/" replace />} />
+
+        <Route path="/test-workflow" element={<ProcessTestPage />} />
       </Routes>
     </BrowserRouter>
   );

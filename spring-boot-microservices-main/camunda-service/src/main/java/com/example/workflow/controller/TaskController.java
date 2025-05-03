@@ -82,7 +82,6 @@ public class TaskController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to claim task: " + e.getMessage());
         }
     }
-
     @GetMapping("/task/{taskId}/form")
     public ResponseEntity<Map<String, Object>> getTaskForm(@PathVariable String taskId) {
         try {
