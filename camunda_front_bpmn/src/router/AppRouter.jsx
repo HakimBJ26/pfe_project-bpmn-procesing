@@ -15,6 +15,9 @@ import DmnEditor from '../pages/dmn/DmnEditor';
 import FormList from '../pages/forms/FormList';
 import FormEditor from '../pages/forms/FormEditor';
 
+// Task Pages
+import TasksPage from '../pages/tasks/TasksPage';
+
 // Error Pages
 import NotFound from '../pages/error/NotFound';
 
@@ -66,6 +69,9 @@ const AppRouter = () => {
           <Route path="forms/new" element={<FormEditor />} />
           <Route path="forms/edit/:formKey" element={<FormEditor />} />
           <Route path="forms/view/:formKey" element={<FormEditor />} />
+          
+          {/* Route pour les tâches utilisateur */}
+          <Route path="tasks" element={<TasksPage />} />
           
           {/* Page d'erreur 404 à l'intérieur du layout */}
           <Route path="404" element={<NotFound />} />

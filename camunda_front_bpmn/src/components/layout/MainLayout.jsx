@@ -12,6 +12,7 @@ import {
   UserOutlined,
   LogoutOutlined,
   ExperimentOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons';
 import './MainLayout.css';
 
@@ -63,14 +64,14 @@ const MainLayout = () => {
               label: 'Formulaires',
             },
             {
+              key: '/tasks',
+              icon: <CheckSquareOutlined />,
+              label: 'Mes tâches',
+            },
+            {
               key: '/test-workflow',
               icon: <ExperimentOutlined />,
               label: 'Tester Workflows',
-            },
-            {
-              key: '/processes',
-              icon: <DashboardOutlined />,
-              label: 'Processus',
             },
             {
               type: 'divider',

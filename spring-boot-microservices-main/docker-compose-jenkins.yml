@@ -1,0 +1,28 @@
+version: '3'
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8989:8080"
+      - "50000:50000"
+    volumes:
+      - ./jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker  # Montage du binaire Docker
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+    restart: always
+    user: root  # Utilisation de l'utilisateur root pour éviter les problèmes de permissions
+    # Installer Docker CLI et autres dépendances au démarrage
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release &&
+        curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - &&
+        echo 'deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable' > /etc/apt/sources.list.d/docker.list &&
+        apt-get update &&
+        apt-get install -y docker-ce-cli &&
+        jenkins-plugin-cli --plugins docker-workflow docker-plugin &&
+        /usr/local/bin/jenkins.sh
+      "
