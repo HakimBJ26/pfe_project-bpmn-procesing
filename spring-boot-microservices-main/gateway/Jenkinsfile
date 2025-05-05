@@ -35,7 +35,7 @@ pipeline {
         stage('Compilation') {
             steps {
                 dir('spring-boot-microservices-main/gateway') {
-                    sh 'mvn clean compile -Dspring.cloud.config.enabled=false'
+                    sh 'mvn clean compile'
                 }
             }
         }
