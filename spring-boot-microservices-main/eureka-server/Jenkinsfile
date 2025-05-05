@@ -40,7 +40,28 @@ pipeline {
             }
         }
         
-    
+        stage('Unit Tests') {
+            steps {
+                dir('spring-boot-microservices-main/eureka-server') {
+                    sh '''
+                    echo "=== Exécution des tests unitaires ==="
+                    mvn test \
+                      -Dspring.cloud.config.enabled=false \
+                      -Deureka.client.register-with-eureka=false \
+                      -Deureka.client.fetch-registry=false \
+                      -Dtest="*Tests" \
+                      -DfailIfNoTests=false
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
+        
         
         stage('SonarQube Analysis') {
             steps {
@@ -99,7 +120,7 @@ pipeline {
                     // Lancer un conteneur à partir de l'image et vérifier qu'il démarre correctement
                     sh """
                     echo "=== Test du conteneur Docker ==="
-                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port Eureka
+                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port du service
                     docker run -d -p 8761:8761 --name eureka-server-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
                     
                     # Vérifier que le conteneur est en cours d'exécution

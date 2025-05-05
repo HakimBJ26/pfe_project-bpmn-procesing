@@ -40,6 +40,28 @@ pipeline {
             }
         }
         
+        stage('Unit Tests') {
+            steps {
+                dir('spring-boot-microservices-main/user-service') {
+                    sh '''
+                    echo "=== Exécution des tests unitaires ==="
+                    mvn test \
+                      -Dspring.cloud.config.enabled=false \
+                      -Deureka.client.enabled=false \
+                      -Dspring.profiles.active=test \
+                      -Dtest="*Test,*Tests" \
+                      -DfailIfNoTests=false
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
+    
         
         stage('SonarQube Analysis') {
             steps {
@@ -99,7 +121,10 @@ pipeline {
                     sh """
                     echo "=== Test du conteneur Docker ==="
                     # Lancer le conteneur en mode détaché avec un nom unique et exposer le port du service
-                    docker run -d -p 8081:8081 --name user-service-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
+                    docker run -d -p 8081:8081 \
+                     -e SPRING_CLOUD_CONFIG_ENABLED=false \
+                     -e EUREKA_CLIENT_ENABLED=false \
+                     --name user-service-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
                     
                     # Vérifier que le conteneur est en cours d'exécution
                     docker ps | grep user-service-test-${BUILD_NUMBER}

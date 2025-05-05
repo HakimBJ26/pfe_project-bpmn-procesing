@@ -35,12 +35,32 @@ pipeline {
         stage('Compilation') {
             steps {
                 dir('spring-boot-microservices-main/config-server') {
-                    sh 'mvn clean compile'
+                    sh 'mvn clean compile -Dspring.cloud.config.enabled=false'
                 }
             }
         }
         
-        
+        stage('Unit Tests') {
+            steps {
+                dir('spring-boot-microservices-main/config-server') {
+                    sh '''
+                    echo "=== Exécution des tests unitaires ==="
+                    mvn test \
+                      -Dspring.cloud.config.enabled=false \
+                      -Dspring.cloud.config.server.git.uri=file:///tmp/config-repo-temp \
+                      -Dspring.cloud.config.server.git.clone-on-start=false \
+                      -Dspring.profiles.active=native \
+                      -Dtest="*Tests" \
+                      -DfailIfNoTests=false
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
         
         stage('SonarQube Analysis') {
             steps {
@@ -99,7 +119,7 @@ pipeline {
                     // Lancer un conteneur à partir de l'image et vérifier qu'il démarre correctement
                     sh """
                     echo "=== Test du conteneur Docker ==="
-                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port du Config Server
+                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port du service
                     docker run -d -p 8888:8888 --name config-server-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
                     
                     # Vérifier que le conteneur est en cours d'exécution

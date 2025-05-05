@@ -35,20 +35,51 @@ pipeline {
         stage('Compilation') {
             steps {
                 dir('spring-boot-microservices-main/gateway') {
-                    sh 'mvn clean compile'
+                    sh 'mvn clean compile -Dspring.cloud.config.enabled=false -Deureka.client.enabled=false'
                 }
             }
         }
         
-        stage('Tests') {
+        stage('Unit Tests') {
             steps {
                 dir('spring-boot-microservices-main/gateway') {
-                    sh 'mvn test -Dspring.cloud.config.enabled=false'
+                    sh '''
+                    echo "=== Exécution des tests unitaires ==="
+                    mvn test \
+                      -Dspring.cloud.config.enabled=false \
+                      -Deureka.client.enabled=false \
+                      -Dspring.profiles.active=test \
+                      -Dtest="*Tests" \
+                      -DfailIfNoTests=false
+                    '''
                 }
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
+        stage('Integration Tests') {
+            steps {
+                dir('spring-boot-microservices-main/gateway') {
+                    sh '''
+                    echo "=== Exécution des tests d'intégration ==="
+                    mvn verify \
+                      -Dspring.cloud.config.enabled=false \
+                      -Deureka.client.enabled=false \
+                      -Dspring.profiles.active=test \
+                      -DskipUnitTests=true \
+                      -Dtest=!*Tests \
+                      -Dit.test="*IT" \
+                      -DfailIfNoTests=false
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/*.xml'
                 }
             }
         }
@@ -76,7 +107,7 @@ pipeline {
         stage('Package') {
             steps {
                 dir('spring-boot-microservices-main/gateway') {
-                    sh 'mvn package -DskipTests -Dspring.cloud.config.enabled=false'
+                    sh 'mvn package -DskipTests -Dspring.cloud.config.enabled=false -Deureka.client.enabled=false'
                 }
             }
         }
@@ -90,7 +121,7 @@ pipeline {
                         echo "FROM eclipse-temurin:17-jdk-alpine" > Dockerfile
                         echo "VOLUME /tmp" >> Dockerfile
                         echo "COPY target/*.jar app.jar" >> Dockerfile
-                        echo "EXPOSE 9090" >> Dockerfile
+                        echo "EXPOSE 9191" >> Dockerfile
                         echo "ENTRYPOINT [\"java\",\"-jar\",\"/app.jar\"]" >> Dockerfile
                     fi
                     '''
@@ -110,8 +141,11 @@ pipeline {
                     // Lancer un conteneur à partir de l'image et vérifier qu'il démarre correctement
                     sh """
                     echo "=== Test du conteneur Docker ==="
-                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port du Gateway
-                    docker run -d -p 9090:9090 --name gateway-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
+                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port du service
+                    docker run -d -p 9191:9191 \
+                      -e SPRING_CLOUD_CONFIG_ENABLED=false \
+                      -e EUREKA_CLIENT_ENABLED=false \
+                      --name gateway-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
                     
                     # Vérifier que le conteneur est en cours d'exécution
                     docker ps | grep gateway-test-${BUILD_NUMBER}

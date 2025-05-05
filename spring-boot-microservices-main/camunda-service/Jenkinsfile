@@ -46,17 +46,19 @@ pipeline {
             }
         }
         
-        stage('Tests') {
+        stage('Unit Tests') {
             steps {
                 dir('spring-boot-microservices-main/camunda-service') {
-                    // Désactiver les tests d'intégration problématiques et la configuration Camunda
-                    // en se basant sur les difficultés rencontrées précédemment
                     sh '''
+                    echo "=== Exécution des tests unitaires ==="
                     mvn test \
-                    -Dspring.cloud.config.enabled=false \
-                    -Dspring.flyway.enabled=false \
-                    -Dcamunda.bpm.enabled=false \
-                    -Dtest=!*IntegrationTest*,!*IT*
+                      -Dspring.cloud.config.enabled=false \
+                      -Dspring.flyway.enabled=false \
+                      -Dcamunda.bpm.enabled=false \
+                      -Deureka.client.enabled=false \
+                      -Dspring.profiles.active=test \
+                      -Dtest="*Test,*Tests" \
+                      -DfailIfNoTests=false
                     '''
                 }
             }
@@ -66,6 +68,8 @@ pipeline {
                 }
             }
         }
+        
+        
         
         stage('SonarQube Analysis') {
             steps {
@@ -142,6 +146,7 @@ pipeline {
                       -e SPRING_CLOUD_CONFIG_ENABLED=false \
                       -e SPRING_FLYWAY_ENABLED=false \
                       -e CAMUNDA_BPM_ENABLED=true \
+                      -e EUREKA_CLIENT_ENABLED=false \
                       --name camunda-service-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
                     
                     # Vérifier que le conteneur est en cours d'exécution
