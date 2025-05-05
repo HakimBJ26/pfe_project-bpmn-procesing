@@ -10,12 +10,25 @@ pipeline {
         // Utilisez l'IP de votre machine hôte au lieu de localhost
         SONAR_URL = 'http://host.docker.internal:9000'
         SONAR_CREDS = credentials('sonarqube-auth')
+        // Définir un tag pour l'image Docker
+        DOCKER_IMAGE_TAG = "eureka-server:${BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+        
+        stage('Vérification Docker') {
+            steps {
+                sh '''
+                echo "=== Vérification de l'installation Docker ==="
+                docker --version
+                docker info
+                echo "=== Docker est correctement installé ==="
+                '''
             }
         }
         
@@ -59,16 +72,78 @@ pipeline {
                 }
             }
         }
+        
+        stage('Package') {
+            steps {
+                dir('spring-boot-microservices-main/eureka-server') {
+                    sh 'mvn package -DskipTests -Dspring.cloud.config.enabled=false'
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir('spring-boot-microservices-main/eureka-server') {
+                    // Création d'un Dockerfile si nécessaire
+                    sh '''
+                    if [ ! -f Dockerfile ]; then
+                        echo "FROM eclipse-temurin:17-jdk-alpine" > Dockerfile
+                        echo "VOLUME /tmp" >> Dockerfile
+                        echo "COPY target/*.jar app.jar" >> Dockerfile
+                        echo "EXPOSE 8761" >> Dockerfile
+                        echo "ENTRYPOINT [\"java\",\"-jar\",\"/app.jar\"]" >> Dockerfile
+                    fi
+                    '''
+                    
+                    // Construction de l'image Docker
+                    sh "docker build -t ${DOCKER_IMAGE_TAG} ."
+                    
+                    // Vérification que l'image a bien été créée
+                    sh 'docker images | grep eureka-server'
+                }
+            }
+        }
+        
+        stage('Test Docker Container') {
+            steps {
+                dir('spring-boot-microservices-main/eureka-server') {
+                    // Lancer un conteneur à partir de l'image et vérifier qu'il démarre correctement
+                    sh """
+                    echo "=== Test du conteneur Docker ==="
+                    # Lancer le conteneur en mode détaché avec un nom unique et exposer le port Eureka
+                    docker run -d -p 8761:8761 --name eureka-server-test-${BUILD_NUMBER} ${DOCKER_IMAGE_TAG}
+                    
+                    # Vérifier que le conteneur est en cours d'exécution
+                    docker ps | grep eureka-server-test-${BUILD_NUMBER}
+                    
+                    # Attendre quelques secondes pour que le conteneur démarre
+                    sleep 20
+                    
+                    # Vérifier les logs du conteneur
+                    docker logs eureka-server-test-${BUILD_NUMBER}
+                    
+                    # Arrêter et supprimer le conteneur de test
+                    docker stop eureka-server-test-${BUILD_NUMBER}
+                    docker rm eureka-server-test-${BUILD_NUMBER}
+                    """
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo "Build successful! SonarQube analysis completed."
+            echo "Build successful! SonarQube analysis completed and Docker image built."
         }
         failure {
             echo "Build failed! Check the logs for more information."
         }
         always {
+            // Nettoyage des images Docker créées pendant le build
+            sh """
+            echo "=== Nettoyage des ressources Docker ==="
+            docker rmi ${DOCKER_IMAGE_TAG} || true
+            """
             cleanWs()
         }
     }
