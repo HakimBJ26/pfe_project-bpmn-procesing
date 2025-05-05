@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
     "eureka.client.register-with-eureka=false",
     "eureka.client.fetch-registry=false"
 })
+@ActiveProfiles("test")
 class EurekaServerApplicationTests {
 
     @Autowired
