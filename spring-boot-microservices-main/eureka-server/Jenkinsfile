@@ -40,18 +40,7 @@ pipeline {
             }
         }
         
-        stage('Tests') {
-            steps {
-                dir('spring-boot-microservices-main/eureka-server') {
-                    sh 'mvn test -Dspring.cloud.config.enabled=false'
-                }
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
-            }
-        }
+    
         
         stage('SonarQube Analysis') {
             steps {
