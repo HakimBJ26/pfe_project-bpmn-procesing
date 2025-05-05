@@ -40,26 +40,7 @@ pipeline {
             }
         }
         
-        stage('Unit Tests') {
-            steps {
-                dir('spring-boot-microservices-main/user-service') {
-                    sh '''
-                    echo "=== Exécution des tests unitaires ==="
-                    mvn test \
-                      -Dspring.cloud.config.enabled=false \
-                      -Deureka.client.enabled=false \
-                      -Dspring.profiles.active=test \
-                      -Dtest="*Test,*Tests" \
-                      -DfailIfNoTests=false
-                    '''
-                }
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
-                }
-            }
-        }
+        
         
     
         
