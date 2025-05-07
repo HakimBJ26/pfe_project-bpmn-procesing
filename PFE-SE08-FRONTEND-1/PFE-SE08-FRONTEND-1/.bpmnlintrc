@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "bpmnlint:recommended",
+    "plugin:camunda/recommended"
+  ],
+  "rules": {
+    "label-required": "error",
+    "no-implicit-split": "error",
+    "no-implicit-end": "error",
+    "single-blank-start-event": "error",
+    "single-end-event": "error",
+    "no-disconnected": "error",
+    "no-duplicate-sequence-flows": "error",
+    "no-gateway-join-fork": "error",
+    "superfluous-gateway": "warn"
+  }
+} 

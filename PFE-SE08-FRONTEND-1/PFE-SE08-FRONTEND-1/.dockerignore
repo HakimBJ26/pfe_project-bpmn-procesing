@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build artifacts
+dist
+build
+coverage
+
+# Version control
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Development files
+.env.local
+.env.development
+.env.development.local
+*.log
+.DS_Store
+.vscode
+.idea
+
+# Tests
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Other
+README.md
+.editorconfig 

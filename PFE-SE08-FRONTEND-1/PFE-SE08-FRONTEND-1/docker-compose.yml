@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_REGISTRY:-bpmn}/process-manager:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-bpmn-process-manager}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-81}:81"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - bpmn-network
+
+
+networks:
+  bpmn-network:
+    driver: bridge 
