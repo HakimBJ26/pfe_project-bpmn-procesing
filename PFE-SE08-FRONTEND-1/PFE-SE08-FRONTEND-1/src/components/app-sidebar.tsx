@@ -36,8 +36,8 @@ import { useAuthStore } from "@/stores/auth.store";
 // This is sample data.
 const data = {
   user: {
-    name: "Aziz Souabni",
-    email: "aziz.souabnii@gmail.com",
+    name: "Hakim Ben Jelloul",
+    email: "hakimbenjelloul26@gmail.com",
     avatar:
       "https://avatars.githubusercontent.com/u/57048839?s=400&u=49e3c75df36ce87c793d22ab207c17ab9c66b45d&v=4",
   },
