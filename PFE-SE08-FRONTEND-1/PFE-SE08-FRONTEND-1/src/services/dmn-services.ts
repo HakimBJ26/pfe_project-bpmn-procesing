@@ -1,28 +1,28 @@
 import { Dmn } from "@/views/dmns/data/schema";
-import { axiosInstance } from "@/lib/axios";
+import { camundaAxiosInstance } from "@/lib/axios";
 
 export const getDmnsService = async (): Promise<Dmn[]> => {
-  const response = await axiosInstance.get("/dmn");
+  const response = await camundaAxiosInstance.get("/dmn");
   return response.data;
 };
 
 export const getDmnByIdService = async (id: string): Promise<Dmn> => {
-  const response = await axiosInstance.get(`/dmn/${id}`);
+  const response = await camundaAxiosInstance.get(`/dmn/${id}`);
   return response.data;
 };
 
 export const createDmnService = async (dmn: Partial<Dmn>): Promise<Dmn> => {
-  const response = await axiosInstance.post("/dmn", dmn);
+  const response = await camundaAxiosInstance.post("/dmn", dmn);
   return response.data;
 };
 
 export const updateDmnService = async (id: string, dmn: Partial<Dmn>): Promise<Dmn> => {
-  const response = await axiosInstance.put(`/dmn/${id}`, dmn);
+  const response = await camundaAxiosInstance.put(`/dmn/${id}`, dmn);
   return response.data;
 };
 
 export const deleteDmnService = async (id: string): Promise<void> => {
-  await axiosInstance.delete(`/dmn/${id}`);
+  await camundaAxiosInstance.delete(`/dmn/${id}`);
 };
 
 export const uploadDmnService = async (xml: string, name: string): Promise<Dmn> => {
@@ -30,11 +30,11 @@ export const uploadDmnService = async (xml: string, name: string): Promise<Dmn> 
   const blob = new Blob([xml], { type: "application/xml" });
   formData.append("file", blob, `${name}.dmn`);
 
-  const response = await axiosInstance.post(`/dmn?name=${encodeURIComponent(name)}`, formData, {
+  const response = await camundaAxiosInstance.post(`/dmn?name=${encodeURIComponent(name)}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
-  
+
   return response.data;
-}; 
+};

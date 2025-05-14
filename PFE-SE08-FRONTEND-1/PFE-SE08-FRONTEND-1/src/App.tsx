@@ -8,6 +8,7 @@ import Task from "./views/task/task";
 import { useAuthStore } from "./stores/auth.store";
 import DashboardPage from "./components/dashboard/page";
 import { LoginForm } from "./components/login-form";
+import { RegisterForm } from "./components/register-form";
 import TaskPage from "./views/tasks/page";
 import ProcessPage from "./views/processes/page";
 import WorkflowPage from "./views/workflows/page";
@@ -21,9 +22,9 @@ import AdminPage from "./views/admin/page";
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
-  
+
   // If not authenticated and trying to access a protected route, redirect to login
- /*  if (
+  if (
     !isAuthenticated &&
     !["/register", "/login"].includes(location.pathname)
   ) {
@@ -31,14 +32,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     sessionStorage.setItem('redirectUrl', location.pathname);
     return <Navigate to="/login" />;
   }
-  
+
   // If authenticated and trying to access login page, redirect to home or saved redirect URL
-  if (isAuthenticated && location.pathname === "/login") {
+  if (isAuthenticated && ["/login", "/register"].includes(location.pathname)) {
     const redirectUrl = sessionStorage.getItem('redirectUrl') || '/';
     sessionStorage.removeItem('redirectUrl'); // Clear the stored URL
     return <Navigate to={redirectUrl} replace />;
-  } */
-  
+  }
+
   return <>{children}</>;
 };
 
@@ -113,7 +114,10 @@ function App() {
       path: "/login",
       element: <LoginForm />,
     },
-
+    {
+      path: "/register",
+      element: <RegisterForm />,
+    },
     {
       path: "/*",
       element: <NotFoundPage />,

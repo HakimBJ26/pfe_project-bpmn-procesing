@@ -1,4 +1,4 @@
-import { axiosInstance } from "@/lib/axios";
+import { camundaAxiosInstance } from "@/lib/axios";
 import { workflowData } from "./types";
 import { AxiosError } from "axios";
 
@@ -67,7 +67,7 @@ export const addWorkflowService = async (
   workflowPayload: WorkflowPayload
 ): Promise<string> => {
   try {
-    await axiosInstance.post("/workflows", workflowPayload);
+    await camundaAxiosInstance.post("/workflows", workflowPayload);
     return "Workflow created succesfully";
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -76,13 +76,13 @@ export const addWorkflowService = async (
 };
 
 export const getWorkflowList = async (): Promise<workflowData[]> => {
-  const response = await axiosInstance.get("/workflows");
+  const response = await camundaAxiosInstance.get("/workflows");
   return response.data;
 };
 
 export const getWorkflowById = async (id: string): Promise<workflowData> => {
   try {
-    const response = await axiosInstance.get(`/workflows/${id}`);
+    const response = await camundaAxiosInstance.get(`/workflows/${id}`);
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -92,10 +92,10 @@ export const getWorkflowById = async (id: string): Promise<workflowData> => {
 
 export const updateWorkflowService = async (
   updateWorkflowUpdatePayload: UpdateWorkflowPayload,
-  workflowId:string
+  workflowId: string
 ) => {
   try {
-    await axiosInstance.put(`/workflows/${workflowId}`, updateWorkflowUpdatePayload);
+    await camundaAxiosInstance.put(`/workflows/${workflowId}`, updateWorkflowUpdatePayload);
     return "Workflow updated succesfully";
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -105,7 +105,7 @@ export const updateWorkflowService = async (
 
 export const deleteWorkflowService = async (id: string) => {
   try {
-    await axiosInstance.delete(`/workflows/${id}`);
+    await camundaAxiosInstance.delete(`/workflows/${id}`);
     return "Workflow deleted succesfully";
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -115,7 +115,7 @@ export const deleteWorkflowService = async (id: string) => {
 
 export const getWorkflowTasks = async (id: string): Promise<WorkflowTasksResponse> => {
   try {
-    const response = await axiosInstance.get(`/workflows/${id}/tasks`);
+    const response = await camundaAxiosInstance.get(`/workflows/${id}/tasks`);
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -124,7 +124,7 @@ export const getWorkflowTasks = async (id: string): Promise<WorkflowTasksRespons
 };
 export const autoFixWorkflowService = async (id: string): Promise<string> => {
   try {
-    await axiosInstance.put(`/workflows/${id}/auto-fix-gateway-incoming-flow`);
+    await camundaAxiosInstance.put(`/workflows/${id}/auto-fix-gateway-incoming-flow`);
     return "Workflow auto-fixed succesfully";
   } catch (error) {
     const axiosError = error as AxiosError;

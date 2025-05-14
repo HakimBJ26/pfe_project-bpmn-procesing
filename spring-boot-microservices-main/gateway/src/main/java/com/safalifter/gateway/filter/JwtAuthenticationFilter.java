@@ -25,6 +25,11 @@ public class JwtAuthenticationFilter implements GatewayFilter {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
 
+        // Allow OPTIONS requests for CORS preflight
+        if (request.getMethod().name().equals("OPTIONS")) {
+            return chain.filter(exchange);
+        }
+
         final List<String> apiEndpoints = List.of("/v1/auth/login", "/v1/auth/register", "/eureka");
 
         Predicate<ServerHttpRequest> isApiSecured = r -> apiEndpoints.stream()

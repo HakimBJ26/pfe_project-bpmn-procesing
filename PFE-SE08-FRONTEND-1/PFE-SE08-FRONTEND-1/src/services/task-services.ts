@@ -1,4 +1,4 @@
-import { axiosInstance } from "@/lib/axios";
+import { camundaAxiosInstance } from "@/lib/axios";
 import { taskData } from "./types";
 
 interface Data {
@@ -13,7 +13,7 @@ export interface submitTaskServiceArgs {
 export const submitTaskService = async (
   payload: submitTaskServiceArgs
 ): Promise<string> => {
-  const response = await axiosInstance.post(
+  const response = await camundaAxiosInstance.post(
     `/tasks/${payload.taskId}/submit-form`,
     payload.data
   );
@@ -21,6 +21,6 @@ export const submitTaskService = async (
 };
 
 export const getTaskService = async (taskId: string): Promise<taskData> => {
-  const response = await axiosInstance.get(`/tasks/${taskId}`);
+  const response = await camundaAxiosInstance.get(`/tasks/${taskId}`);
   return response.data;
 };

@@ -1,20 +1,20 @@
-import { axiosInstance } from "@/lib/axios";
+import { camundaAxiosInstance } from "@/lib/axios";
 import { AxiosError } from "axios";
 import { FormData } from "./types";
 
 export interface uploadFormServiceArgs {
   [key: string]: any;
-  title:string
+  title: string
 }
 
 
 
 export const uploadFormService = async (formJson: uploadFormServiceArgs) => {
   try {
-    const response = await axiosInstance.post("/forms", {
+    const response = await camundaAxiosInstance.post("/forms", {
       content: { ...formJson },
       formKey: formJson.id,
-      title:formJson.title
+      title: formJson.title
     });
     return response.data;
   } catch (error) {
@@ -24,9 +24,9 @@ export const uploadFormService = async (formJson: uploadFormServiceArgs) => {
 };
 
 
-export const getFormsService = async (): Promise<FormData[]>  => {
+export const getFormsService = async (): Promise<FormData[]> => {
   try {
-    const response = await axiosInstance.get(`/forms`);
+    const response = await camundaAxiosInstance.get(`/forms`);
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -36,7 +36,7 @@ export const getFormsService = async (): Promise<FormData[]>  => {
 
 export const deleteFormService = async (formId: string) => {
   try {
-    await axiosInstance.delete(`/forms/${formId}`);
+    await camundaAxiosInstance.delete(`/forms/${formId}`);
     return "Form deleted successfully";
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -46,7 +46,7 @@ export const deleteFormService = async (formId: string) => {
 
 export const updateFormService = async (formId: string, formJson: uploadFormServiceArgs) => {
   try {
-    await axiosInstance.put(`/forms/${formId}`, {
+    await camundaAxiosInstance.put(`/forms/${formId}`, {
       content: { ...formJson },
       formKey: formJson.id,
       title: formJson.title
@@ -60,7 +60,7 @@ export const updateFormService = async (formId: string, formJson: uploadFormServ
 
 export const getFormByKeyService = async (formKey: string): Promise<FormData> => {
   try {
-    const response = await axiosInstance.get(`/forms/${formKey}`);
+    const response = await camundaAxiosInstance.get(`/forms/${formKey}`);
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;
