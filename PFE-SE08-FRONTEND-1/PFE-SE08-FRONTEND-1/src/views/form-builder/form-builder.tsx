@@ -41,6 +41,46 @@ const FormBuilder = () => {
     enabled: !!formKey,
   });
 
+  // Function to validate and fix form schema components
+  const validateAndFixFormSchema = (schema: any) => {
+    if (!schema) return defaultformJson;
+
+    // Make a deep copy of the schema to avoid modifying the original
+    const fixedSchema = _.cloneDeep(schema);
+
+    // Ensure type is set
+    if (!fixedSchema.type) {
+      fixedSchema.type = "default";
+    }
+
+    // Ensure schemaVersion is set
+    if (!fixedSchema.schemaVersion) {
+      fixedSchema.schemaVersion = 18;
+    }
+
+    // Ensure components is an array
+    if (!Array.isArray(fixedSchema.components)) {
+      fixedSchema.components = [];
+    }
+
+    // Fix components with undefined type
+    fixedSchema.components = fixedSchema.components.map((component: any) => {
+      if (!component) return null;
+
+      const fixedComponent = { ...component };
+
+      // Set a default type for components with undefined type
+      if (!fixedComponent.type) {
+        console.warn("Found component with undefined type, setting default type 'textfield':", component);
+        fixedComponent.type = "textfield";
+      }
+
+      return fixedComponent;
+    }).filter(Boolean); // Remove any null components
+
+    return fixedSchema;
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -49,19 +89,45 @@ const FormBuilder = () => {
     });
 
     if (formData && formKey) {
-      const cleanFormData = {
-        ...formData.content,
-        id: formData.id
-      };
+      try {
+        const cleanFormData = {
+          ...formData.content,
+          id: formData.id
+        };
 
-      setFormJson(cleanFormData);
-      formRef.current.importSchema(cleanFormData).catch((err: Error) => {
-        console.error("Failed to import form schema:", err);
-      });
+        // Validate and fix the form schema before importing
+        const validatedFormData = validateAndFixFormSchema(cleanFormData);
+        setFormJson(validatedFormData);
+
+        formRef.current.importSchema(validatedFormData).catch((err: Error) => {
+          console.error("Failed to import form schema:", err);
+          toast.error("Failed to import form schema", {
+            description: err.message,
+          });
+        });
+      } catch (error) {
+        console.error("Error processing form data:", error);
+        toast.error("Error processing form data", {
+          description: "There was an error processing the form data.",
+        });
+      }
     } else {
-      formRef.current.importSchema(formJson).catch((err: Error) => {
-        console.error("Failed to import form schema:", err);
-      });
+      try {
+        // Validate and fix the form schema before importing
+        const validatedFormJson = validateAndFixFormSchema(formJson);
+
+        formRef.current.importSchema(validatedFormJson).catch((err: Error) => {
+          console.error("Failed to import form schema:", err);
+          toast.error("Failed to import form schema", {
+            description: err.message,
+          });
+        });
+      } catch (error) {
+        console.error("Error processing form data:", error);
+        toast.error("Error processing form data", {
+          description: "There was an error processing the form data.",
+        });
+      }
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -127,23 +193,41 @@ const FormBuilder = () => {
   });
 
   const saveForm = () => {
-    const schema = formRef.current?.saveSchema();
-    if (!_.isEqual(formJson, schema)) {
-      setFormJson(schema);
-      toast("Form saved locally", {
-        description: "Your form has been saved to browser storage",
-        icon: <Save className="h-4 w-4" />,
+    try {
+      let schema = formRef.current?.saveSchema();
+      if (schema && !_.isEqual(formJson, schema)) {
+        // Validate and fix the schema before saving
+        schema = validateAndFixFormSchema(schema);
+        setFormJson(schema);
+        toast("Form saved locally", {
+          description: "Your form has been saved to browser storage",
+          icon: <Save className="h-4 w-4" />,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving form:", error);
+      toast.error("Error saving form", {
+        description: "There was an error saving the form.",
       });
     }
   };
 
   const resetForm = () => {
-    setFormJson(defaultformJson);
-    formRef.current?.importSchema(defaultformJson);
-    toast("Form reset", {
-      description: "Your form has been reset to default",
-      icon: <Trash2 className="h-4 w-4" />,
-    });
+    try {
+      // Use the validated default form
+      const validatedDefaultForm = validateAndFixFormSchema(defaultformJson);
+      setFormJson(validatedDefaultForm);
+      formRef.current?.importSchema(validatedDefaultForm);
+      toast("Form reset", {
+        description: "Your form has been reset to default",
+        icon: <Trash2 className="h-4 w-4" />,
+      });
+    } catch (error) {
+      console.error("Error resetting form:", error);
+      toast.error("Error resetting form", {
+        description: "There was an error resetting the form.",
+      });
+    }
   };
 
   const handleUploadForm = (title: string) => {
@@ -165,7 +249,7 @@ const FormBuilder = () => {
     try {
       const content = await file.text();
       let formContent;
-      
+
       try {
         formContent = JSON.parse(content);
       } catch (e) {

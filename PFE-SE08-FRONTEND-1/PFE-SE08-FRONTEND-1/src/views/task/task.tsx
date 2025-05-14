@@ -19,6 +19,7 @@ import { ErrorPage } from "@/components/error-page";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import * as _ from "lodash";
 
 type claimTaskMutationArgs = {
   taskId: string;
@@ -31,6 +32,41 @@ const Task = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<Form | null>(null);
+
+  // Function to validate and fix form schema components
+  const validateAndFixFormSchema = (schema: any) => {
+    if (!schema) return { type: "default", components: [] };
+
+    // Make a deep copy of the schema to avoid modifying the original
+    const fixedSchema = _.cloneDeep(schema);
+
+    // Ensure type is set
+    if (!fixedSchema.type) {
+      fixedSchema.type = "default";
+    }
+
+    // Ensure components is an array
+    if (!Array.isArray(fixedSchema.components)) {
+      fixedSchema.components = [];
+    }
+
+    // Fix components with undefined type
+    fixedSchema.components = fixedSchema.components.map((component: any) => {
+      if (!component) return null;
+
+      const fixedComponent = { ...component };
+
+      // Set a default type for components with undefined type
+      if (!fixedComponent.type) {
+        console.warn("Found component with undefined type, setting default type 'textfield':", component);
+        fixedComponent.type = "textfield";
+      }
+
+      return fixedComponent;
+    }).filter(Boolean); // Remove any null components
+
+    return fixedSchema;
+  };
 
   const {
     data: task,
@@ -92,18 +128,31 @@ const Task = () => {
 
   useEffect(() => {
     if (!containerRef.current || !defaultformJson) return;
-    
-    formRef.current = new Form({
-      container: containerRef.current,
-    });
-    
-    formRef.current.importSchema(defaultformJson, {}).catch((err: Error) => {
-      console.error("Failed to import form schema:", err);
-    });
-    
-    formRef.current.on("changed", (event: SubmitEvent) => {
-      setFormState(event);
-    });
+
+    try {
+      formRef.current = new Form({
+        container: containerRef.current,
+      });
+
+      // Validate and fix the form schema before importing
+      const validatedFormJson = validateAndFixFormSchema(defaultformJson);
+
+      formRef.current.importSchema(validatedFormJson, {}).catch((err: Error) => {
+        console.error("Failed to import form schema:", err);
+        toast.error("Failed to import form schema", {
+          description: err.message,
+        });
+      });
+
+      formRef.current.on("changed", (event: SubmitEvent) => {
+        setFormState(event);
+      });
+    } catch (error) {
+      console.error("Error processing form data:", error);
+      toast.error("Error processing form data", {
+        description: "There was an error processing the form data.",
+      });
+    }
 
     // Cleanup on component unmount
     return () => {
@@ -133,16 +182,24 @@ const Task = () => {
   };
 
   const handleSubmitForm = () => {
-    const isValid = isValidForm();
-    const data = formState?.data;
-    if (isValid && data) {
-      submitTaskMutation.mutate({
-        taskId: taskId || "",
-        data: data,
-      });
-    } else {
-      toast.error("Cannot submit form", {
-        description: "Please fill out all required fields correctly",
+    try {
+      const isValid = isValidForm();
+      const data = formState?.data;
+      if (isValid && data) {
+        // Ensure the data is valid before submitting
+        submitTaskMutation.mutate({
+          taskId: taskId || "",
+          data: data,
+        });
+      } else {
+        toast.error("Cannot submit form", {
+          description: "Please fill out all required fields correctly",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Error submitting form", {
+        description: "There was an error submitting the form.",
       });
     }
   };
@@ -164,9 +221,9 @@ const Task = () => {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="rounded-full h-8 w-8 mr-2"
                 onClick={handleGoBack}
               >
@@ -182,7 +239,7 @@ const Task = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <TooltipProvider>
                 <Tooltip>
@@ -199,8 +256,8 @@ const Task = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {task?.assignee 
-                      ? `This task is already claimed by ${task.assignee}` 
+                    {task?.assignee
+                      ? `This task is already claimed by ${task.assignee}`
                       : "Claim this task to work on it"}
                   </TooltipContent>
                 </Tooltip>
@@ -221,10 +278,10 @@ const Task = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {!task?.assignee 
-                      ? "You must claim the task before completing it" 
-                      : !isValidForm() 
-                        ? "Please fill out all required fields correctly" 
+                    {!task?.assignee
+                      ? "You must claim the task before completing it"
+                      : !isValidForm()
+                        ? "Please fill out all required fields correctly"
                         : "Submit and complete this task"}
                   </TooltipContent>
                 </Tooltip>
@@ -256,9 +313,9 @@ const Task = () => {
                 </p>
               </div>
             )}
-            
+
             <Separator className="my-4" />
-            
+
             <div className="form-container bg-white rounded-md border border-gray-100 p-4">
               <div ref={containerRef} className="min-h-[300px]" />
             </div>
