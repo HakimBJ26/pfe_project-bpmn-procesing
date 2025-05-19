@@ -23,9 +23,11 @@ COPY --from=build /app/target/*.jar app.jar
 # Create application.properties for standalone mode
 RUN echo "spring.cloud.config.enabled=false" > /app/application.properties && \
     echo "spring.config.import=optional:file:./application.properties" >> /app/application.properties && \
-    echo "eureka.client.enabled=false" >> /app/application.properties && \
-    echo "eureka.client.register-with-eureka=false" >> /app/application.properties && \
-    echo "eureka.client.fetch-registry=false" >> /app/application.properties && \
+    echo "eureka.client.enabled=true" >> /app/application.properties && \
+    echo "eureka.client.register-with-eureka=true" >> /app/application.properties && \
+    echo "eureka.client.fetch-registry=true" >> /app/application.properties && \
+    echo "eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/" >> /app/application.properties && \
+    echo "eureka.instance.prefer-ip-address=true" >> /app/application.properties && \
     echo "spring.flyway.enabled=false" >> /app/application.properties && \
     echo "camunda.bpm.database.schema-update=true" >> /app/application.properties && \
     echo "camunda.bpm.database.type=mysql" >> /app/application.properties && \
@@ -37,4 +39,4 @@ RUN echo "spring.cloud.config.enabled=false" > /app/application.properties && \
 EXPOSE 8998
 
 # Run the application with external config
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Deureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/", "-Deureka.client.register-with-eureka=true", "-Deureka.client.fetch-registry=true", "-Deureka.instance.prefer-ip-address=true", "-jar", "app.jar"]
