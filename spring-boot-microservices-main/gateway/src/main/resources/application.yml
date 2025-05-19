@@ -9,6 +9,26 @@ spring:
       discovery:
         locator:
           enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/v1/auth/**
+          filters:
+            - RewritePath=/(?<segment>.*), /$\{segment}
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/v1/users/**
+          filters:
+            - RewritePath=/(?<segment>.*), /$\{segment}
+        - id: camunda-service
+          uri: lb://camunda-service
+          predicates:
+            - Path=/v1/process/**,/engine-rest/**
+          filters:
+            - RewritePath=/(?<segment>.*), /$\{segment}
       httpclient:
         connect-timeout: 60000
         response-timeout: 60s
@@ -27,3 +47,13 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
+  
+# Configuration Eureka pour permettre à la gateway de trouver les services
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
