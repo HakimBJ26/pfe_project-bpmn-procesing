@@ -5,17 +5,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Les URLs doivent pointer vers localhost puisque c'est le navigateur qui fera les requêtes
+        VITE_API_GATEWAY_URL: http://localhost:8080
+        VITE_CAMUNDA_API_URL: http://localhost:8998
     image: ${DOCKER_REGISTRY:-bpmn}/process-manager:${TAG:-latest}
     container_name: ${CONTAINER_NAME:-bpmn-process-manager}
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-81}:81"
+      - "${FRONTEND_PORT:-3000}:81"
     environment:
       - NODE_ENV=production
     networks:
       - bpmn-network
-
+      - spring-boot-microservices-main_default
 
 networks:
   bpmn-network:
-    driver: bridge 
+    driver: bridge
+  spring-boot-microservices-main_default:
+    external: true
