@@ -1,223 +1,222 @@
-# Déploiement de Microservices Spring Boot sur Kubernetes
+# Application de Traitement de Processus BPMN avec Microservices Spring Boot
 
-Ce projet démontre comment déployer une architecture microservices Spring Boot sur Kubernetes (Minikube) avec les composants suivants:
+Ce projet implémente une architecture microservices complète pour la gestion et l'exécution de processus BPMN, avec une application frontend React et un backend basé sur Spring Boot et Camunda, le tout conteneurisé avec Docker.
 
 ## Architecture du Projet
 
 ![Architecture Microservices](https://miro.medium.com/max/1400/1*I4Ak4uYpkz-m1GFWrWF1sg.png)
 
-### Services inclus:
+### Services inclus et leurs rôles:
 
-- **Eureka Server**: Service de découverte pour l'enregistrement des microservices
-- **Config Server**: Gestion centralisée de la configuration
-- **API Gateway**: Point d'entrée unique pour les requêtes clients
-- **Auth Service**: Gestion de l'authentification et autorisation (JWT)
-- **User Service**: Gestion des utilisateurs
-- **Camunda Service**: Moteur de workflow BPMN
-- **Frontend React**: Application frontend pour la gestion des processus BPMN
+- **Eureka Server (Port 8761)**: Service de découverte permettant aux microservices de s'enregistrer et de se localiser mutuellement sans configuration en dur des adresses IP.
+
+- **Config Server (Port 8888)**: Gestion centralisée de la configuration pour tous les services. Permet de modifier la configuration sans redémarrer les services.
+
+- **API Gateway (Port 8080)**: Point d'entrée unique pour toutes les requêtes clients. Gère le routage des requêtes vers les services appropriés et la sécurité globale.
+
+- **Auth Service (Port 8999)**: Responsable de l'authentification des utilisateurs et de la génération des tokens JWT utilisés pour sécuriser les API.
+
+- **User Service (Port 8996)**: Gère les profils utilisateurs, les rôles et les autorisations.
+
+- **Camunda Service (Port 8998)**: Moteur de workflow BPMN permettant la création, le déploiement et l'exécution de processus métier.
+
+- **MySQL**: Base de données relationnelle partagée par tous les microservices.
+
+- **Frontend React (Port 3000)**: Application web moderne pour interagir avec les processus BPMN et gérer les utilisateurs. Déployée dans un conteneur Docker avec Nginx.
 
 ### Technologies utilisées:
 
-- **Spring Boot**: Framework Java pour le développement des microservices
-- **Spring Cloud**: Outils pour les systèmes distribués
-- **Spring Security**: Sécurité et authentification avec JWT
-- **MySQL**: Base de données relationnelle
-- **Kubernetes**: Orchestration de conteneurs
-- **Docker**: Conteneurisation des services
-- **React**: Framework frontend
+- **Spring Boot**: Framework Java pour le développement de microservices robustes
+- **Spring Cloud**: Composants pour systèmes distribués (Eureka, Config Server, Gateway)
+- **Spring Security** et **JWT**: Authentification et autorisation sécurisées
+- **Camunda Engine**: Moteur de workflow BPMN avec API REST
+- **React/TypeScript**: Framework frontend moderne avec typage fort
+- **Docker & Docker Compose**: Conteneurisation et orchestration des services
+- **MySQL**: Base de données relationnelle robuste
 
 ## Prérequis
 
-- Docker Desktop
-- Minikube
-- kubectl
+- Docker Desktop (avec Docker Compose)
 - PowerShell (Windows) ou Terminal (Linux/macOS)
+- Un navigateur web moderne (Chrome, Firefox, Edge, etc.)
 
-## Guide de déploiement
+## Démarrage rapide avec les scripts
 
-### 1. Démarrer Minikube
+Des scripts de démarrage et d'arrêt ont été créés pour faciliter la gestion de l'application complète :
+
+### 1. Démarrer l'application complète
 
 ```powershell
-# Supprimer toute instance existante de Minikube
-minikube delete
-
-# Démarrer Minikube avec Docker
-minikube start --driver=docker --memory=1800 --cpus=2
+# À la racine du projet, exécutez :
+.\starting-project.ps1
 ```
 
-### 2. Configurer Docker pour utiliser le daemon Docker de Minikube
+Ce script va :
+- Démarrer tous les microservices backend dans l'ordre approprié
+- Attendre que les services critiques soient disponibles (Eureka, Gateway)
+- Démarrer l'application frontend
+- Afficher les URLs d'accès aux différents services
+
+### 2. Arrêter l'application complète
 
 ```powershell
-& minikube -p minikube docker-env | Invoke-Expression
+# À la racine du projet, exécutez :
+.\stopping-project.ps1
 ```
 
-### 3. Créer les fichiers de déploiement Kubernetes
+Ce script arrête proprement tous les conteneurs Docker des services backend et frontend.
 
-Créez un répertoire `k8s` et ajoutez les fichiers de déploiement suivants:
+## Démarrage manuel avec Docker Compose
 
-- `namespace.yaml`: Définit le namespace Kubernetes pour les microservices
-- `mysql-deployment.yaml`: Déploie MySQL avec un volume persistant
-- `eureka-server-deployment.yaml`: Déploie le serveur Eureka
-- `config-server-deployment.yaml`: Déploie le serveur de configuration
-- `gateway-deployment.yaml`: Déploie l'API Gateway
-- `auth-service-deployment.yaml`: Déploie le service d'authentification
-- `user-service-deployment.yaml`: Déploie le service utilisateur
-- `camunda-service-deployment.yaml`: Déploie le service Camunda
-- `frontend-deployment.yaml`: Déploie l'application frontend
+Si vous préférez démarrer les services manuellement, suivez ces étapes :
 
-### 4. Construire les images Docker
+### 1. Démarrer les services backend
 
 ```powershell
-# Eureka Server
-cd spring-boot-microservices-main\eureka-server
-docker build -t eureka-server:latest .
-cd ..\..
+# Accéder au répertoire du backend
+cd spring-boot-microservices-main
 
-# Config Server
-cd spring-boot-microservices-main\config-server
-docker build -t config-server:latest .
-cd ..\..
-
-# Gateway
-cd spring-boot-microservices-main\gateway
-docker build -t gateway:latest .
-cd ..\..
-
-# Auth Service
-cd spring-boot-microservices-main\auth-service
-docker build -t auth-service:latest .
-cd ..\..
-
-# User Service
-cd spring-boot-microservices-main\user-service
-docker build -t user-service:latest .
-cd ..\..
-
-# Camunda Service
-cd spring-boot-microservices-main\camunda-service
-docker build -t camunda-service:latest .
-cd ..\..
-
-# Frontend
-cd PFE-SE08-FRONTEND-1\PFE-SE08-FRONTEND-1
-docker build -t frontend:latest .
-cd ..\..
+# Démarrer les services
+docker-compose up -d
 ```
 
-### 5. Déployer les services
+L'ordre de démarrage et les dépendances sont configurés dans le fichier `docker-compose.yml`. Les services seront démarrés dans cet ordre :
+1. MySQL (base de données)
+2. Eureka Server (découverte de services)
+3. Config Server (configuration)
+4. Les microservices applicatifs (auth-service, user-service, camunda-service)
+5. API Gateway
+
+### 2. Démarrer le frontend
 
 ```powershell
-# Créer le namespace
-kubectl apply -f k8s/namespace.yaml
+# Accéder au répertoire du frontend
+cd ..\PFE-SE08-FRONTEND-1\PFE-SE08-FRONTEND-1
 
-# Déployer MySQL
-kubectl apply -f k8s/mysql-deployment.yaml
-
-# Déployer Eureka Server
-kubectl apply -f k8s/eureka-server-deployment.yaml
-
-# Déployer Config Server
-kubectl apply -f k8s/config-server-deployment.yaml
-
-# Déployer Gateway
-kubectl apply -f k8s/gateway-deployment.yaml
-
-# Déployer Auth Service
-kubectl apply -f k8s/auth-service-deployment.yaml
-
-# Déployer User Service
-kubectl apply -f k8s/user-service-deployment.yaml
-
-# Déployer Camunda Service
-kubectl apply -f k8s/camunda-service-deployment.yaml
-
-# Déployer Frontend
-kubectl apply -f k8s/frontend-deployment.yaml
+# Démarrer le service frontend
+docker-compose up -d
 ```
 
-### 6. Vérifier le déploiement
+### 3. Vérifier l'état des services
 
 ```powershell
-# Vérifier les pods
-kubectl get pods -n microservices
+# Vérifier l'état des services backend
+cd ..\..\spring-boot-microservices-main
+docker-compose ps
 
-# Vérifier les services
-kubectl get services -n microservices
-```
+# Vérifier l'état du frontend
+cd ..\PFE-SE08-FRONTEND-1\PFE-SE08-FRONTEND-1
+docker-compose ps
 
-### 7. Accéder aux services
-
-```powershell
-# Obtenir l'URL pour accéder à Gateway
-minikube service gateway -n microservices --url
-
-# Obtenir l'URL pour accéder au Frontend
-minikube service frontend -n microservices --url
+# Vérifier l'enregistrement des services dans Eureka
+# Accédez à http://localhost:8761 dans votre navigateur
 ```
 
 ## Structure du projet
 
 ```
-spring-boot-microservices-main/
-├── auth-service/         # Service d'authentification
-├── camunda-service/      # Service de workflow BPMN
-├── config-server/        # Serveur de configuration
-├── config/               # Fichiers de configuration
-├── eureka-server/        # Serveur de découverte
-├── file-storage/         # Service de stockage de fichiers
-├── gateway/              # API Gateway
-├── job-service/          # Service de gestion des emplois
-├── k8s/                  # Fichiers de déploiement Kubernetes
-├── notification-service/ # Service de notification
-└── user-service/         # Service de gestion des utilisateurs
+spring-boot-microservices-main/   # Répertoire principal du backend
+│├─ auth-service/             # Service d'authentification et d'autorisation
+│├─ camunda-service/          # Moteur de workflow BPMN
+│├─ config-server/            # Serveur de configuration centralisée
+│├─ config/                   # Fichiers de configuration pour Config Server
+│├─ eureka-server/            # Service de découverte pour l'enregistrement des microservices
+│├─ gateway/                  # API Gateway pour le routage des requêtes
+│├─ user-service/             # Service de gestion des utilisateurs
+│├─ docker-compose.yml         # Configuration Docker Compose pour le backend
+│├─ starting-project.ps1      # Script de démarrage de tous les services
+│└─ stopping-project.ps1       # Script d'arrêt de tous les services
 
 PFE-SE08-FRONTEND-1/
-└── PFE-SE08-FRONTEND-1/  # Application frontend React
+└─ PFE-SE08-FRONTEND-1/       # Application frontend React/TypeScript
+    ├─ src/                    # Code source de l'application frontend
+    ├─ Dockerfile              # Configuration pour construire l'image Docker du frontend
+    └─ docker-compose.yml      # Configuration Docker Compose pour le frontend
 ```
+
+## Utilisation de l'application
+
+Une fois les services démarrés, vous pouvez accéder aux différentes interfaces :
+
+### 1. Application Frontend
+
+- **URL**: http://localhost:3000
+- **Description**: Interface utilisateur principale pour interagir avec l'application.
+- **Fonctionnalités**:
+  - Authentification (Login/Register)
+  - Gestion des processus BPMN
+  - Visualisation et exécution des tâches
+  - Interface d'administration
+
+### 2. Eureka Dashboard
+
+- **URL**: http://localhost:8761
+- **Description**: Interface de surveillance pour vérifier l'enregistrement des services.
+
+### 3. Camunda Cockpit
+
+- **URL**: http://localhost:8998
+- **Description**: Interface d'administration Camunda pour la gestion des processus BPMN.
+- **Identifiants par défaut**: demo / demo
 
 ## Fonctionnalités
 
-- **Authentification et autorisation**: JWT, rôles utilisateur (ADMIN, USER)
-- **Gestion des utilisateurs**: Inscription, connexion, profil
-- **Workflow BPMN**: Création et exécution de processus métier
-- **API Gateway**: Routage des requêtes vers les services appropriés
-- **Configuration centralisée**: Gestion des propriétés des services
-- **Découverte de services**: Enregistrement et découverte automatique des services
+- **Authentification sécurisée**: JWT, gestion des sessions, contrôle d'accès basé sur les rôles (ADMIN, USER)
+- **Gestion des utilisateurs**: Inscription, connexion, profils utilisateurs, modification des informations personnelles
+- **Modélisation BPMN**: Création, modification et déploiement de diagrammes de processus BPMN
+- **Exécution de processus**: Démarrage et suivi des instances de processus
+- **Gestion des tâches**: Liste des tâches, attribution, complétion
+- **Communication entre services**: Communication synchrone via API REST et asynchrone via événements
+- **Configuration centralisée**: Gestion des propriétés des services via Config Server
+- **Découverte de services**: Enregistrement et découverte automatique des services via Eureka
 
 ## Dépannage
 
 ### Problèmes courants et solutions
 
-1. **Pods en état "Pending"**:
-   - Vérifiez les ressources disponibles: `kubectl describe pod <nom-du-pod> -n microservices`
-   - Augmentez les ressources allouées à Minikube
+1. **Problèmes de connexion aux services**:
+   - Vérifiez que tous les services sont en cours d'exécution avec `docker-compose ps`
+   - Consultez les logs des services avec `docker-compose logs <service-name>`
+   - Vérifiez l'enregistrement des services dans Eureka (http://localhost:8761)
 
-2. **Pods en état "CrashLoopBackOff"**:
-   - Vérifiez les logs: `kubectl logs <nom-du-pod> -n microservices`
-   - Vérifiez les variables d'environnement et les dépendances
+2. **Erreurs CORS dans le frontend**:
+   - Assurez-vous que la configuration CORS est correcte dans tous les services
+   - Vérifiez les origines autorisées dans les fichiers WebConfig.java
 
-3. **Services non accessibles**:
-   - Vérifiez les services: `kubectl get services -n microservices`
-   - Vérifiez les endpoints: `kubectl get endpoints -n microservices`
+3. **Problèmes de connexion à la base de données**:
+   - Vérifiez que MySQL est en cours d'exécution: `docker-compose ps mysql`
+   - Vérifiez les logs MySQL: `docker-compose logs mysql`
+   - Assurez-vous que les paramètres de connexion sont corrects dans les fichiers application.properties
+
+4. **Service ne s'enregistre pas dans Eureka**:
+   - Vérifiez que le service a la configuration Eureka correcte
+   - Assurez-vous que le nom du service est en minuscules
+   - Redémarrez le service: `docker-compose restart <service-name>`
 
 ## Nettoyage
 
-Pour supprimer tous les ressources créées:
+Pour arrêter et supprimer tous les conteneurs Docker:
 
 ```powershell
-# Supprimer tous les déploiements dans le namespace microservices
-kubectl delete namespace microservices
+# Arrêter tous les services
+.\stopping-project.ps1
 
-# Arrêter Minikube
-minikube stop
+# OU manuellement
+cd spring-boot-microservices-main
+docker-compose down
 
-# Supprimer le cluster Minikube
-minikube delete
+cd ..\PFE-SE08-FRONTEND-1\PFE-SE08-FRONTEND-1
+docker-compose down
+
+# Pour supprimer également les volumes (attention, cela supprimera les données MySQL)
+docker-compose down -v
 ```
 
 ## Références
 
 - [Documentation Spring Boot](https://spring.io/projects/spring-boot)
-- [Documentation Kubernetes](https://kubernetes.io/docs/home/)
-- [Documentation Minikube](https://minikube.sigs.k8s.io/docs/)
+- [Documentation Spring Cloud](https://spring.io/projects/spring-cloud)
+- [Documentation Camunda](https://docs.camunda.org/)
 - [Documentation Docker](https://docs.docker.com/)
+- [Documentation Docker Compose](https://docs.docker.com/compose/)
+- [Documentation React](https://reactjs.org/docs/getting-started.html)
