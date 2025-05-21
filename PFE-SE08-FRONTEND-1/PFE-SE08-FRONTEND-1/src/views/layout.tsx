@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { AppNavbar } from "@/components/app-navbar";
 import {
   SidebarInset,
   SidebarProvider,
@@ -10,8 +11,11 @@ const Layout = () => {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className="flex flex-1 flex-col gap-4 pt-0">
-          <Outlet />
+        <div className="flex flex-1 flex-col min-h-screen">
+          <AppNavbar />
+          <main className="flex-1 px-4 md:px-6 py-4">
+            <Outlet />
+          </main>
         </div>
       </SidebarInset>
     </SidebarProvider>
