@@ -243,9 +243,8 @@ const DmnBuilder = () => {
         const blob = new Blob([xml], { type: "application/xml" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `dmn-${
-          dmnName || new Date().toISOString().slice(0, 10)
-        }.dmn`;
+        link.download = `dmn-${dmnName || new Date().toISOString().slice(0, 10)
+          }.dmn`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -280,10 +279,10 @@ const DmnBuilder = () => {
         const uploadPromise =
           isEditMode && dmnId
             ? updateDmnMutation.mutateAsync({
-                id: dmnId,
-                xml: xml,
-                name: dmnName,
-              })
+              id: dmnId,
+              xml: xml,
+              name: dmnName,
+            })
             : uploadDmnService(xml, dmnName);
 
         uploadPromise
@@ -293,9 +292,8 @@ const DmnBuilder = () => {
                 ? "DMN updated successfully"
                 : "DMN uploaded successfully",
               {
-                description: `Your DMN "${dmnName}" has been ${
-                  isEditMode ? "updated" : "uploaded"
-                } to the server`,
+                description: `Your DMN "${dmnName}" has been ${isEditMode ? "updated" : "uploaded"
+                  } to the server`,
                 icon: <Upload className="h-4 w-4" />,
               }
             );
@@ -312,9 +310,8 @@ const DmnBuilder = () => {
               error
             );
             toast.error(`Failed to ${isEditMode ? "update" : "upload"} DMN`, {
-              description: `There was an error ${
-                isEditMode ? "updating" : "uploading"
-              } your DMN. Please try again.`,
+              description: `There was an error ${isEditMode ? "updating" : "uploading"
+                } your DMN. Please try again.`,
             });
           })
           .finally(() => {
@@ -327,9 +324,8 @@ const DmnBuilder = () => {
         error
       );
       toast.error(`Failed to ${isEditMode ? "update" : "upload"} DMN`, {
-        description: `There was an error ${
-          isEditMode ? "updating" : "uploading"
-        } your DMN. Please try again.`,
+        description: `There was an error ${isEditMode ? "updating" : "uploading"
+          } your DMN. Please try again.`,
       });
       setIsUploading(false);
     }
@@ -387,35 +383,58 @@ const DmnBuilder = () => {
   if (isEditMode && isError) return <ErrorPage />;
 
   return (
-    <div className="h-[100vh] w-full bg-white flex flex-col">
-      <Card className="m-4 shadow-sm border-0">
-        <CardContent className="p-4">
+    <div className="h-[100vh] w-full bg-gray-50 flex flex-col">
+      <Card className="m-4 shadow-md border-0 bg-white rounded-xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-600/10 rounded-xl opacity-50 z-0"></div>
+        <CardContent className="p-4 relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <h2 className="text-2xl font-semibold text-gray-800">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                 {isEditMode
                   ? `Edit DMN: ${dmnName}`
                   : "Decision Model and Notation Builder"}
               </h2>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full h-8 w-8"
-                    >
-                      <Info className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Create and edit DMN decision tables</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Press Ctrl+S to save
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100"
+                        >
+                          <Info className="h-4 w-4 mr-2" />
+                          Info
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>View information about the DMN builder</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>About DMN Builder</DialogTitle>
+                    <DialogDescription>
+                      This is a DMN (Decision Model and Notation) builder that
+                      allows you to create and edit decision tables.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p className="text-sm text-gray-500">
+                      DMN is a standard for business decision modeling. It provides a graphical notation for specifying business decisions in a way that business users can understand.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                      <h4 className="font-medium text-amber-700">Keyboard Shortcuts</h4>
+                      <ul className="mt-2 space-y-1 text-sm">
+                        <li className="flex items-center"><kbd className="px-2 py-1 bg-white rounded border mr-2 text-xs">Ctrl+S</kbd> Save diagram</li>
+                      </ul>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -433,7 +452,7 @@ const DmnBuilder = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 shadow-sm"
                           disabled={isEditMode} // Disable reset in edit mode
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -442,7 +461,7 @@ const DmnBuilder = () => {
                       </ConfirmationDialog>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-white border border-red-100 shadow-md">
                     <p>Reset the DMN diagram to its default state</p>
                   </TooltipContent>
                 </Tooltip>
@@ -456,14 +475,14 @@ const DmnBuilder = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-sm"
                       onClick={saveDmn}
                     >
                       <Save className="h-4 w-4 mr-2" />
                       Save
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-white border border-green-100 shadow-md">
                     <p>
                       Save the DMN diagram{" "}
                       {isEditMode ? "to the server" : "locally"} (Ctrl+S)
@@ -478,7 +497,7 @@ const DmnBuilder = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                      className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 shadow-sm"
                       onClick={downloadDmn}
                       disabled={isDefaultDmn}
                     >
@@ -486,7 +505,7 @@ const DmnBuilder = () => {
                       Download
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-white border border-purple-100 shadow-md">
                     <p>Download the DMN diagram as a DMN file</p>
                   </TooltipContent>
                 </Tooltip>
@@ -499,14 +518,14 @@ const DmnBuilder = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-sm"
                         onClick={() => setUploadDialogOpen(true)}
                       >
                         <Upload className="h-4 w-4 mr-2" />
                         Upload
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-white border border-blue-100 shadow-md">
                       <p>Upload the current DMN to the server</p>
                     </TooltipContent>
                   </Tooltip>
@@ -520,14 +539,14 @@ const DmnBuilder = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-sm"
                         onClick={saveDmn}
                       >
                         <Save className="h-4 w-4 mr-2" />
                         Update
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-white border border-blue-100 shadow-md">
                       <p>Update the DMN on the server</p>
                     </TooltipContent>
                   </Tooltip>
@@ -550,14 +569,14 @@ const DmnBuilder = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-sm"
                       >
                         <Upload className="h-4 w-4 mr-2" />
                         Import File
                       </Button>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-white border border-amber-100 shadow-md">
                     <p>Import DMN from a file</p>
                   </TooltipContent>
                 </Tooltip>
@@ -649,8 +668,8 @@ const DmnBuilder = () => {
                       {isUploading
                         ? "Processing..."
                         : isEditMode
-                        ? "Update"
-                        : "Upload"}
+                          ? "Update"
+                          : "Upload"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

@@ -17,7 +17,7 @@ import { workflowData } from "@/services/types";
 export default function WorkflowPage() {
   const { setWorkflows } = useWorkflowStore();
   const [displayWorkflows, setDisplayWorkflows] = useState<Workflow[]>([]);
-  
+
   const {
     data: workflowsData,
     isLoading,
@@ -31,13 +31,13 @@ export default function WorkflowPage() {
     // Update the workflow store
     if (workflowsData) {
       setWorkflows(workflowsData);
-      
+
       // Convert to the expected Workflow type for display
       const convertedWorkflows: Workflow[] = workflowsData.map((workflow: workflowData) => ({
         ...workflow,
         readyToDeploy: true,
       }));
-      
+
       setDisplayWorkflows(convertedWorkflows);
     }
   }, [workflowsData, setWorkflows]);
@@ -49,19 +49,28 @@ export default function WorkflowPage() {
     <>
       <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex">
         <div className="flex items-center justify-between space-y-2">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Workflows</h2>
-            <p className="text-muted-foreground">
-              Here&apos;s a list of your workflows!
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Workflow Management</h2>
+            <p className="text-muted-foreground flex items-center">
+              <span className="inline-block h-2 w-2 rounded-full bg-blue-500 mr-2"></span>
+              Here&apos;s a list of your workflows and process definitions
             </p>
           </div>
-          <Link to="/workflow-builder">
-            <Button>
-              <Plus className="mr-1 h-4 w-4" /> Create Workflow
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+              <span className="mr-1.5 h-2 w-2 rounded-full bg-blue-500"></span>
+              {displayWorkflows.length} Workflows
+            </div>
+            <Link to="/workflow-builder">
+              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md transition-all duration-300 hover:shadow-lg">
+                <Plus className="mr-2 h-4 w-4" /> Create Workflow
+              </Button>
+            </Link>
+          </div>
         </div>
-        <DataTable data={displayWorkflows} columns={columns} />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+          <DataTable data={displayWorkflows} columns={columns} />
+        </div>
       </div>
       <Toaster />
     </>
