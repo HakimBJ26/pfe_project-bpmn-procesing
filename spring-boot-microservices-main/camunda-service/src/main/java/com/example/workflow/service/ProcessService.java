@@ -91,7 +91,7 @@ public class ProcessService {
                 for (SequenceFlow flow : incomingFlows) {
                     FlowNode source = flow.getSource();
                     // Check if the source is not a UserTask
-                    if (!(source instanceof UserTask) && !(source instanceof BusinessRuleTask)) {
+                    if (!(source instanceof UserTask) && !(source instanceof BusinessRuleTask) && !(source instanceof Gateway)) {
                         hasNonUserTaskSource = true;
                         break;
                     }

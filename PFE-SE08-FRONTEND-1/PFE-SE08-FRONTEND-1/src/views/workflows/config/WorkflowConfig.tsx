@@ -30,6 +30,8 @@ import {
   Clock,
   Info,
   ArrowLeft,
+  FileCode,
+  Search,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -54,12 +56,19 @@ import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import UpdateWorkflow from "./components/update-workflow";
 import { useGlobalStore } from "@/stores/global.store";
+import { ConfigBusinessRuleTaskForm } from "./components/config-business-rule-task-form";
+import { Input } from "@/components/ui/input";
 
 export default function WorkflowConfig() {
   const { workflowId } = useParams<{ workflowId: string }>();
   const navigate = useNavigate();
   const [open, setOpen] = useState<boolean>(false);
   const { developerMode } = useGlobalStore();
+  const [userTaskFilter, setUserTaskFilter] = useState<string>("");
+  const [serviceTaskFilter, setServiceTaskFilter] = useState<string>("");
+  const [sendTaskFilter, setSendTaskFilter] = useState<string>("");
+  const [businessRuleTaskFilter, setBusinessRuleTaskFilter] = useState<string>("");
+  const [gatewayFilter, setGatewayFilter] = useState<string>("");
 
   if (workflowId == undefined) return;
 
@@ -123,6 +132,37 @@ export default function WorkflowConfig() {
     : [];
 
   const gateways = workflowTasks?.gateways ? workflowTasks?.gateways : [];
+  
+  // Filter functions for each tab
+  const filteredUserTasks = userTasks.filter((task: any) => 
+    userTaskFilter === "" || 
+    task.id?.toLowerCase().includes(userTaskFilter.toLowerCase()) || 
+    task.name?.toLowerCase().includes(userTaskFilter.toLowerCase())
+  );
+  
+  const filteredServiceTasks = serviceTasks.filter((task: any) => 
+    serviceTaskFilter === "" || 
+    task.id?.toLowerCase().includes(serviceTaskFilter.toLowerCase()) || 
+    task.name?.toLowerCase().includes(serviceTaskFilter.toLowerCase())
+  );
+  
+  const filteredSendTasks = sendTasks.filter((task: any) => 
+    sendTaskFilter === "" || 
+    task.id?.toLowerCase().includes(sendTaskFilter.toLowerCase()) || 
+    task.name?.toLowerCase().includes(sendTaskFilter.toLowerCase())
+  );
+  
+  const filteredBusinessRuleTasks = businessRuleTasks.filter((task: any) => 
+    businessRuleTaskFilter === "" || 
+    task.id?.toLowerCase().includes(businessRuleTaskFilter.toLowerCase()) || 
+    task.name?.toLowerCase().includes(businessRuleTaskFilter.toLowerCase())
+  );
+  
+  const filteredGateways = gateways.filter((gateway: any) => 
+    gatewayFilter === "" || 
+    gateway.id?.toLowerCase().includes(gatewayFilter.toLowerCase()) || 
+    gateway.name?.toLowerCase().includes(gatewayFilter.toLowerCase())
+  );
 
   const handleGoBack = () => {
     navigate(-1);
@@ -290,14 +330,31 @@ export default function WorkflowConfig() {
               </TabsList>
 
               <TabsContent value="user" className="space-y-4 pt-4">
+                <div className="relative mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      placeholder="Search by ID or name..."
+                      className="pl-9 h-10"
+                      value={userTaskFilter}
+                      onChange={(e) => setUserTaskFilter(e.target.value)}
+                    />
+                  </div>
+                </div>
                 {userTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <User className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p>No user tasks found in this workflow</p>
                   </div>
+                ) : filteredUserTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p>No user tasks match your search</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {userTasks.map((task: any, idx: number) => (
+                    {filteredUserTasks.map((task: any, idx: number) => (
                       <Card
                         key={idx}
                         className="overflow-hidden hover:shadow-md transition-shadow duration-200"
@@ -380,14 +437,31 @@ export default function WorkflowConfig() {
               </TabsContent>
 
               <TabsContent value="service" className="space-y-4 pt-4">
+                <div className="relative mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      placeholder="Search by ID or name..."
+                      className="pl-9 h-10"
+                      value={serviceTaskFilter}
+                      onChange={(e) => setServiceTaskFilter(e.target.value)}
+                    />
+                  </div>
+                </div>
                 {serviceTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Cog className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p>No service tasks found in this workflow</p>
                   </div>
+                ) : filteredServiceTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p>No service tasks match your search</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {serviceTasks.map((task: any, idx: number) => (
+                    {filteredServiceTasks.map((task: any, idx: number) => (
                       <Card
                         key={idx}
                         className="overflow-hidden hover:shadow-md transition-shadow duration-200"
@@ -472,14 +546,31 @@ export default function WorkflowConfig() {
               </TabsContent>
 
               <TabsContent value="send" className="space-y-4 pt-4">
+                <div className="relative mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      placeholder="Search by ID or name..."
+                      className="pl-9 h-10"
+                      value={sendTaskFilter}
+                      onChange={(e) => setSendTaskFilter(e.target.value)}
+                    />
+                  </div>
+                </div>
                 {sendTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Send className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p>No send tasks found in this workflow</p>
                   </div>
+                ) : filteredSendTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p>No send tasks match your search</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {sendTasks.map((task: any, idx: number) => (
+                    {filteredSendTasks.map((task: any, idx: number) => (
                       <Card
                         key={idx}
                         className="overflow-hidden hover:shadow-md transition-shadow duration-200"
@@ -563,109 +654,193 @@ export default function WorkflowConfig() {
                 )}
               </TabsContent>
 
-              <TabsContent value="business_rule" className="space-y-4 pt-4">
+                <TabsContent value="business_rule" className="space-y-4 pt-4">
+                <div className="relative mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      placeholder="Search by ID or name..."
+                      className="pl-9 h-10"
+                      value={businessRuleTaskFilter}
+                      onChange={(e) => setBusinessRuleTaskFilter(e.target.value)}
+                    />
+                  </div>
+                </div>
                 {businessRuleTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Table2 className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p>No business rule tasks found in this workflow</p>
                   </div>
+                ) : filteredBusinessRuleTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p>No business rule tasks match your search</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {businessRuleTasks.map((task: any, idx: number) => (
-                      <Card
-                        key={idx}
-                        className="overflow-hidden hover:shadow-md transition-shadow duration-200"
-                      >
-                        <CardHeader className="bg-amber-50 p-4 pb-3">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-lg font-medium text-amber-800">
-                              {task.name || `Business Rule Task ${idx + 1}`}
-                            </CardTitle>
-                            <Table2 className="h-5 w-5 text-amber-600" />
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-3">
-                          <div className="space-y-2">
-                            {developerMode && (
-                              <>
-                                <div className="text-sm text-gray-500">
-                                  ID:{" "}
-                                  <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
-                                    {task.id}
-                                  </span>
-                                </div>
-                                <div className="flex items-center">
-                                  <div
-                                    className={`text-sm ${
-                                      task.delegateExpression
-                                        ? "text-gray-700"
-                                        : "text-red-600"
-                                    }`}
-                                  >
-                                    {task.delegateExpression ? (
-                                      <>
-                                        Service:{" "}
-                                        <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
+                    {filteredBusinessRuleTasks.map((task: any, idx: number) => {
+                      // Determine implementation type and values
+                      const implementationType = task.dmnImplementation === "DMN" ? "dmn" : "delegateExpression";
+                      
+                      return (
+                        <Card
+                          key={idx}
+                          className="overflow-hidden hover:shadow-md transition-shadow duration-200"
+                        >
+                          <CardHeader className="bg-amber-50 p-4 pb-3">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-lg font-medium text-amber-800">
+                                {task.name || `Business Rule Task ${idx + 1}`}
+                              </CardTitle>
+                              <Table2 className="h-5 w-5 text-amber-600" />
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-3">
+                            <div className="space-y-2">
+                              {developerMode && (
+                                <>
+                                  <div className="text-sm text-gray-500">
+                                    ID:{" "}
+                                    <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
+                                      {task.id}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Show implementation details based on type */}
+                                  {task.delegateExpression && (
+                                    <div className="flex items-center">
+                                      <div className="text-sm text-gray-700">
+                                        <div className="flex items-center">
+                                          <Cog className="h-4 w-4 mr-1 text-blue-500" />
+                                          <span>Implementation: Delegate Expression</span>
+                                        </div>
+                                        <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded mt-1 block">
                                           {task.delegateExpression}
                                         </span>
-                                      </>
-                                    ) : (
-                                      "Service not configured"
-                                    )}
-                                  </div>
-                                </div>
-                                <Separator className="my-2" />
-                              </>
-                            )}
-                            <DialogContainer
-                              type="service"
-                              onSubmit={(service: string) => {
-                                updateWorkflowMutation.mutate({
-                                  config: [
-                                    {
-                                      id: task.id,
-                                      attributeValue: service,
-                                      attribute: "DELEGATE_EXPRESSION",
-                                      type: "BUSINESS_RULE_TASK",
-                                    },
-                                  ],
-                                });
-                              }}
-                              formTitle="Choose Service"
-                              title={`Configure ${
-                                task.name || "Business Rule Task"
-                              }`}
-                              defaultValue={task.delegateExpression}
-                              trigger={
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full mt-2"
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  {task.delegateExpression
-                                    ? "Change Service"
-                                    : "Assign Service"}
-                                </Button>
-                              }
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {task.dmnImplementation === "DMN" && (
+                                    <div className="flex flex-col space-y-1">
+                                      <div className="text-sm text-gray-700">
+                                        <div className="flex items-center">
+                                          <FileCode className="h-4 w-4 mr-1 text-amber-500" />
+                                          <span>Implementation: DMN Decision Table</span>
+                                        </div>
+                                        <div className="mt-1">
+                                          <span className="text-xs text-gray-500">Decision Ref: </span>
+                                          <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
+                                            {task.decisionRef}
+                                          </span>
+                                        </div>
+                                        <div className="mt-1">
+                                          <span className="text-xs text-gray-500">Result Variable: </span>
+                                          <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
+                                            {task.resultVariable}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {!task.delegateExpression && task.dmnImplementation !== "DMN" && (
+                                    <div className="text-sm text-red-600">
+                                      Implementation not configured
+                                    </div>
+                                  )}
+                                  
+                                  <Separator className="my-2" />
+                                </>
+                              )}
+                              
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full mt-2"
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    {task.delegateExpression || task.decisionRef
+                                      ? "Change Implementation"
+                                      : "Configure Implementation"}
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>
+                                      Configure {task.name || "Business Rule Task"}
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <ConfigBusinessRuleTaskForm
+                                    onSubmit={(attribute, attributeValue, resultVariable) => {
+                                      // Create the configuration object with proper typing
+                                      const config: UpdateWorkflowPayload['config'] = [
+                                        {
+                                          id: task.id,
+                                          attributeValue,
+                                          attribute: attribute as "DELEGATE_EXPRESSION" | "DMN_IMPLEMENTATION",
+                                          type: "BUSINESS_RULE_TASK",
+                                        }
+                                      ];
+                                      
+                                      // Create the payload object
+                                      const payload: UpdateWorkflowPayload = { config };
+                                      
+                                      // If result variable is provided for DMN implementation, add it to the payload
+                                      if (attribute === "DMN_IMPLEMENTATION" && resultVariable) {
+                                        // We need to add the resultVariable to the request in a way that the backend can process
+                                        // Since the type doesn't directly support resultVariable, we'll use a workaround
+                                        (payload.config![0] as any).resultVariable = resultVariable;
+                                      }
+                                      
+                                      updateWorkflowMutation.mutate(payload);
+                                    }}
+                                    title={task.name || "Business Rule Task"}
+                                    defaultImplementationType={implementationType}
+                                    defaultDelegateExpression={task.delegateExpression || ""}
+                                    defaultDmnRef={task.decisionRef || ""}
+                                    defaultResultVariable={task.resultVariable || "result"}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="gateways" className="space-y-4 pt-4">
+                <div className="relative mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      placeholder="Search by ID or name..."
+                      className="pl-9 h-10"
+                      value={gatewayFilter}
+                      onChange={(e) => setGatewayFilter(e.target.value)}
+                    />
+                  </div>
+                </div>
                 {gateways.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Waypoints className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p>No gateways found in this workflow</p>
                   </div>
+                ) : filteredGateways.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p>No gateways match your search</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {gateways.map((gateway: any, idx: number) => (
+                    {filteredGateways.map((gateway: any, idx: number) => (
                       <Card
                         key={idx}
                         className="overflow-hidden hover:shadow-md transition-shadow duration-200"
