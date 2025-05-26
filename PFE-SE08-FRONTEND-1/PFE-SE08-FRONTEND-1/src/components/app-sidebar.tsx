@@ -1,7 +1,5 @@
 import * as React from "react";
 import {
-  ArrowLeftFromLine,
-  ArrowRightFromLine,
   AudioWaveform,
   Command,
   Computer,
@@ -9,29 +7,20 @@ import {
   GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2,
-  ShieldCheck,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   useSidebar,
 } from "@/components/ui/sidebar";
 // Theme is now hardcoded to light mode
-import { Button } from "./ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useGlobalStore } from "@/stores/global.store";
-import { useAuthStore } from "@/stores/auth.store";
 
 // This is sample data.
 const data = {
@@ -129,30 +118,6 @@ const data = {
     //     },
     //   ],
     // },
-    {
-      title: "Camunda Modelers",
-      url: "#",
-      icon: Settings2,
-      isActive: true,
-      items: [
-        {
-          title: "Workflow Builder",
-          url: "/workflow-builder",
-        },
-        // {
-        //   title: "Process Builder",
-        //   url: "/process-builder",
-        // },
-        {
-          title: "Form Builder",
-          url: "/form-builder",
-        },
-        {
-          title: "Decision Model Builder",
-          url: "/dmn-builder",
-        },
-      ],
-    },
   ],
   projects: [
     {
@@ -175,37 +140,49 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Light theme is enforced, no theme switching allowed
-  const { state, setOpen, open } = useSidebar();
+  const { open } = useSidebar();
   const { developerMode, setDeveloperMode } = useGlobalStore();
-  const { isAdmin } = useAuthStore();
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="relative overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 z-0 opacity-10">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl"></div>
+    <Sidebar collapsible="icon" {...props} className="bg-white border-r border-gray-200 shadow-sm">
+      <SidebarHeader className="relative overflow-hidden border-b border-gray-100 bg-white">
+        {/* Enhanced decorative background elements */}
+        <div className="absolute inset-0 z-0 opacity-5">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-purple-400/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-400/20 to-blue-400/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl animate-pulse delay-1000"></div>
         </div>
 
-        {/* Logo with enhanced styling */}
-        <a href="/" className="relative z-10 transition-all duration-300 hover:opacity-90 block">
-          <div className="flex justify-center h-20 shrink-0 items-center">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/10 rounded-full blur-md transform scale-90"></div>
-              <img
-                alt="Wevioo"
-                src={`${state == "collapsed" ? "w_logo_cropped.png" : "w_logo.png"}`}
-                className="h-12 w-auto relative z-10 drop-shadow-md transition-transform duration-300 hover:scale-105"
-              />
+        {/* Logo and Brand Section */}
+        <div className="relative z-10 flex items-center justify-center py-6">
+          {open ? (
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                  <Computer className="h-6 w-6 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-lg font-bold text-gray-800">
+                  Workflow Hub
+                </h1>
+                <p className="text-xs text-gray-500">Process Management</p>
+              </div>
             </div>
-          </div>
-        </a>
+          ) : (
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                <Computer className="h-6 w-6 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+            </div>
+          )}
+        </div>
 
         {/* Developer mode toggle with enhanced styling */}
-        <div className="relative z-10 flex items-center justify-between px-4 py-3 mt-2 bg-sidebar-accent/10 backdrop-blur-sm rounded-lg mx-2">
+        <div className="relative z-10 flex items-center justify-between px-4 py-3 mb-2 bg-gradient-to-r from-gray-50 to-blue-50 backdrop-blur-sm rounded-xl mx-3 border border-gray-200 shadow-sm">
           {open && (
-            <span className="text-xs font-medium flex items-center">
-              <Computer className="h-3.5 w-3.5 mr-1.5 text-primary" />
+            <span className="text-xs font-semibold flex items-center text-gray-700">
+              <Computer className="h-3.5 w-3.5 mr-2 text-blue-500" />
               Developer Mode
             </span>
           )}
@@ -213,74 +190,94 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             checked={developerMode}
             onCheckedChange={() => setDeveloperMode(!developerMode)}
             title={!developerMode ? "Active Developer Mode" : "Inactive Developer Mode"}
-            className="data-[state=checked]:bg-primary"
+            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-blue-500 data-[state=checked]:to-blue-600 shadow-sm"
           />
         </div>
       </SidebarHeader>
-      <SidebarContent className="relative">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute top-1/4 right-0 w-32 h-32 bg-primary/5 rounded-full blur-xl"></div>
-          <div className="absolute bottom-1/4 left-0 w-40 h-40 bg-accent/5 rounded-full blur-xl"></div>
+      <SidebarContent className="relative px-2 py-4 bg-white">
+        {/* Enhanced decorative background elements */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 right-0 w-40 h-40 bg-gradient-to-bl from-blue-400/5 to-transparent rounded-full blur-2xl animate-pulse delay-500"></div>
+          <div className="absolute bottom-1/4 left-0 w-48 h-48 bg-gradient-to-tr from-purple-400/5 to-transparent rounded-full blur-2xl animate-pulse delay-1500"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-r from-blue-400/3 to-purple-400/3 rounded-full blur-xl animate-pulse delay-2000"></div>
         </div>
 
         {/* Main navigation with enhanced styling */}
-        <div className="relative z-10">
+        <div className="relative z-10 space-y-2">
           <NavMain items={data.navMain} />
         </div>
 
-        {/* Administration panel with enhanced styling */}
-        {!isAdmin && (
-          <SidebarGroup className="mt-6 relative z-10">
-            <div className="px-4 py-2 mb-2">
-              <h3 className="text-xs font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase tracking-wider">Administration</h3>
-            </div>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Administration Panel"
-                  asChild
-                  className="transition-all duration-300 hover:bg-primary/10 rounded-lg mx-2"
-                >
-                  <a href="/admin" className="flex items-center gap-3 group p-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent text-white shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-105">
-                      <ShieldCheck className="h-4 w-4" />
-                    </div>
-                    <span className="font-medium group-hover:text-primary transition-colors duration-300">Administration</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
-      </SidebarContent>
-      <SidebarFooter className="space-y-4 relative">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-primary/5 to-transparent"></div>
+        {/* Additional visual elements */}
+        <div className="relative z-10 mt-8 px-3">
+          <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
         </div>
 
-        {/* User profile with enhanced styling */}
-        <div className="relative z-10">
-          <NavUser user={data.user} />
-        </div>
-
-        {/* Collapse button with enhanced styling */}
-        <div className="relative z-10 px-2">
-          <Button
-            onClick={() => setOpen(!open)}
-            className="rounded-xl flex items-center justify-center w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {state == "collapsed" ? (
-              <ArrowRightFromLine className="h-4 w-4 animate-pulse" />
-            ) : (
-              <>
-                <ArrowLeftFromLine className="h-4 w-4 mr-2" />
-                <span className="text-sm font-medium">Collapse Sidebar</span>
-              </>
+        {/* Status indicator */}
+        <div className="relative z-10 mt-6 px-3">
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+            {open && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs font-medium text-green-700">System Online</span>
+              </div>
             )}
-          </Button>
+            {!open && (
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mx-auto"></div>
+            )}
+          </div>
         </div>
+      </SidebarContent>
+      <SidebarFooter className="relative border-t border-gray-100 p-4 bg-white">
+        {/* Enhanced decorative background elements */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-t from-blue-400/5 via-purple-400/3 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-transparent rounded-full blur-xl"></div>
+        </div>
+
+        {/* User info card with enhanced styling */}
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-gray-50 to-blue-50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
+            {open ? (
+              <>
+                <div className="relative">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+                    <span className="text-white font-semibold text-sm">HB</span>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">
+                    Hakim Ben Jelloul
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    hakimbenjelloul26@gmail.com
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="relative mx-auto">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+                  <span className="text-white font-semibold text-sm">HB</span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick stats when expanded */}
+        {open && (
+          <div className="relative z-10 mt-3 grid grid-cols-2 gap-2">
+            <div className="p-2 bg-blue-50 rounded-lg text-center border border-blue-200">
+              <div className="text-lg font-bold text-blue-700">12</div>
+              <div className="text-xs text-blue-600">Active Tasks</div>
+            </div>
+            <div className="p-2 bg-purple-50 rounded-lg text-center border border-purple-200">
+              <div className="text-lg font-bold text-purple-700">5</div>
+              <div className="text-xs text-purple-600">Workflows</div>
+            </div>
+          </div>
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

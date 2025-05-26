@@ -56,7 +56,6 @@ import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import UpdateWorkflow from "./components/update-workflow";
 import { useGlobalStore } from "@/stores/global.store";
-import { ConfigBusinessRuleTaskForm } from "./components/config-business-rule-task-form";
 import { Input } from "@/components/ui/input";
 
 export default function WorkflowConfig() {
@@ -127,40 +126,40 @@ export default function WorkflowConfig() {
 
   const businessRuleTasks = workflowTasks?.tasks
     ? workflowTasks?.tasks.filter(
-        (task: any) => task.type == "businessRuleTask"
-      )
+      (task: any) => task.type == "businessRuleTask"
+    )
     : [];
 
   const gateways = workflowTasks?.gateways ? workflowTasks?.gateways : [];
-  
+
   // Filter functions for each tab
-  const filteredUserTasks = userTasks.filter((task: any) => 
-    userTaskFilter === "" || 
-    task.id?.toLowerCase().includes(userTaskFilter.toLowerCase()) || 
+  const filteredUserTasks = userTasks.filter((task: any) =>
+    userTaskFilter === "" ||
+    task.id?.toLowerCase().includes(userTaskFilter.toLowerCase()) ||
     task.name?.toLowerCase().includes(userTaskFilter.toLowerCase())
   );
-  
-  const filteredServiceTasks = serviceTasks.filter((task: any) => 
-    serviceTaskFilter === "" || 
-    task.id?.toLowerCase().includes(serviceTaskFilter.toLowerCase()) || 
+
+  const filteredServiceTasks = serviceTasks.filter((task: any) =>
+    serviceTaskFilter === "" ||
+    task.id?.toLowerCase().includes(serviceTaskFilter.toLowerCase()) ||
     task.name?.toLowerCase().includes(serviceTaskFilter.toLowerCase())
   );
-  
-  const filteredSendTasks = sendTasks.filter((task: any) => 
-    sendTaskFilter === "" || 
-    task.id?.toLowerCase().includes(sendTaskFilter.toLowerCase()) || 
+
+  const filteredSendTasks = sendTasks.filter((task: any) =>
+    sendTaskFilter === "" ||
+    task.id?.toLowerCase().includes(sendTaskFilter.toLowerCase()) ||
     task.name?.toLowerCase().includes(sendTaskFilter.toLowerCase())
   );
-  
-  const filteredBusinessRuleTasks = businessRuleTasks.filter((task: any) => 
-    businessRuleTaskFilter === "" || 
-    task.id?.toLowerCase().includes(businessRuleTaskFilter.toLowerCase()) || 
+
+  const filteredBusinessRuleTasks = businessRuleTasks.filter((task: any) =>
+    businessRuleTaskFilter === "" ||
+    task.id?.toLowerCase().includes(businessRuleTaskFilter.toLowerCase()) ||
     task.name?.toLowerCase().includes(businessRuleTaskFilter.toLowerCase())
   );
-  
-  const filteredGateways = gateways.filter((gateway: any) => 
-    gatewayFilter === "" || 
-    gateway.id?.toLowerCase().includes(gatewayFilter.toLowerCase()) || 
+
+  const filteredGateways = gateways.filter((gateway: any) =>
+    gatewayFilter === "" ||
+    gateway.id?.toLowerCase().includes(gatewayFilter.toLowerCase()) ||
     gateway.name?.toLowerCase().includes(gatewayFilter.toLowerCase())
   );
 
@@ -379,11 +378,10 @@ export default function WorkflowConfig() {
                                 </div>
                                 <div className="flex items-center">
                                   <div
-                                    className={`text-sm ${
-                                      task.formKey
+                                    className={`text-sm ${task.formKey
                                         ? "text-gray-700"
                                         : "text-red-600"
-                                    }`}
+                                      }`}
                                   >
                                     {task.formKey ? (
                                       <>
@@ -486,11 +484,10 @@ export default function WorkflowConfig() {
                                 </div>
                                 <div className="flex items-center">
                                   <div
-                                    className={`text-sm ${
-                                      task.delegateExpression
+                                    className={`text-sm ${task.delegateExpression
                                         ? "text-gray-700"
                                         : "text-red-600"
-                                    }`}
+                                      }`}
                                   >
                                     {task.delegateExpression ? (
                                       <>
@@ -595,11 +592,10 @@ export default function WorkflowConfig() {
                                 </div>
                                 <div className="flex items-center">
                                   <div
-                                    className={`text-sm ${
-                                      task.delegateExpression
+                                    className={`text-sm ${task.delegateExpression
                                         ? "text-gray-700"
                                         : "text-red-600"
-                                    }`}
+                                      }`}
                                   >
                                     {task.delegateExpression ? (
                                       <>
@@ -654,7 +650,7 @@ export default function WorkflowConfig() {
                 )}
               </TabsContent>
 
-                <TabsContent value="business_rule" className="space-y-4 pt-4">
+              <TabsContent value="business_rule" className="space-y-4 pt-4">
                 <div className="relative mb-4">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -682,7 +678,7 @@ export default function WorkflowConfig() {
                     {filteredBusinessRuleTasks.map((task: any, idx: number) => {
                       // Determine implementation type and values
                       const implementationType = task.dmnImplementation === "DMN" ? "dmn" : "delegateExpression";
-                      
+
                       return (
                         <Card
                           key={idx}
@@ -706,7 +702,7 @@ export default function WorkflowConfig() {
                                       {task.id}
                                     </span>
                                   </div>
-                                  
+
                                   {/* Show implementation details based on type */}
                                   {task.delegateExpression && (
                                     <div className="flex items-center">
@@ -721,7 +717,7 @@ export default function WorkflowConfig() {
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {task.dmnImplementation === "DMN" && (
                                     <div className="flex flex-col space-y-1">
                                       <div className="text-sm text-gray-700">
@@ -744,17 +740,17 @@ export default function WorkflowConfig() {
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {!task.delegateExpression && task.dmnImplementation !== "DMN" && (
                                     <div className="text-sm text-red-600">
                                       Implementation not configured
                                     </div>
                                   )}
-                                  
+
                                   <Separator className="my-2" />
                                 </>
                               )}
-                              
+
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button
@@ -785,17 +781,17 @@ export default function WorkflowConfig() {
                                           type: "BUSINESS_RULE_TASK",
                                         }
                                       ];
-                                      
+
                                       // Create the payload object
                                       const payload: UpdateWorkflowPayload = { config };
-                                      
+
                                       // If result variable is provided for DMN implementation, add it to the payload
                                       if (attribute === "DMN_IMPLEMENTATION" && resultVariable) {
                                         // We need to add the resultVariable to the request in a way that the backend can process
                                         // Since the type doesn't directly support resultVariable, we'll use a workaround
                                         (payload.config![0] as any).resultVariable = resultVariable;
                                       }
-                                      
+
                                       updateWorkflowMutation.mutate(payload);
                                     }}
                                     title={task.name || "Business Rule Task"}
@@ -877,11 +873,11 @@ export default function WorkflowConfig() {
                               {gateway.incoming.find(
                                 (flow: any) => flow.expression === ""
                               ) && (
-                                <div className="text-xs text-red-600 flex items-center">
-                                  <Info className="h-3 w-3 mr-1" />
-                                  Some incoming flows not configured
-                                </div>
-                              )}
+                                  <div className="text-xs text-red-600 flex items-center">
+                                    <Info className="h-3 w-3 mr-1" />
+                                    Some incoming flows not configured
+                                  </div>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -900,11 +896,11 @@ export default function WorkflowConfig() {
                               {gateway.outgoing.find(
                                 (flow: any) => flow.expression === ""
                               ) && (
-                                <div className="text-xs text-red-600 flex items-center">
-                                  <Info className="h-3 w-3 mr-1" />
-                                  Some outgoing flows not configured
-                                </div>
-                              )}
+                                  <div className="text-xs text-red-600 flex items-center">
+                                    <Info className="h-3 w-3 mr-1" />
+                                    Some outgoing flows not configured
+                                  </div>
+                                )}
                             </div>
 
                             <Separator className="my-2" />
@@ -916,9 +912,8 @@ export default function WorkflowConfig() {
                                 updateWorkflowMutation.mutate(payload);
                               }}
                               formTitle="Gateway Configuration"
-                              title={`Configure ${
-                                gateway.name || `Gateway ${idx + 1}`
-                              }`}
+                              title={`Configure ${gateway.name || `Gateway ${idx + 1}`
+                                }`}
                               trigger={
                                 <Button
                                   variant="outline"

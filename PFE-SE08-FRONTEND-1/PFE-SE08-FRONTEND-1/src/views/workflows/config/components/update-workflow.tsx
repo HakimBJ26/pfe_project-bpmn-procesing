@@ -7,7 +7,11 @@ import BpmnModeler from "bpmn-js/lib/Modeler";
 import { UseMutationResult } from "@tanstack/react-query";
 import lintingModule from "@camunda/linting/modeler";
 import { Linter } from "@camunda/linting";
-
+import {
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule,
+    CamundaPlatformPropertiesProviderModule,
+  } from "bpmn-js-properties-panel";
 import * as z from "zod";
 
 import camundaModdle from "camunda-bpmn-moddle/resources/camunda.json";
@@ -18,6 +22,9 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useGlobalStore } from "@/stores/global.store";
+import { Card, CardContent } from "@/components/ui/card";
+import { DialogFooter } from "@/components/ui/dialog";
 
 
 const formSchema = z.object({
@@ -35,6 +42,7 @@ const UpdateWorkflow = ({ defaultBpmnXml, title, updateWorkflowMutation, closeDi
     const modelerRef = useRef<BpmnModeler | null>(null); // Ref for the modeler instance
     const [bpmnXml, setBpmnXml] = useState<string>(defaultBpmnXml);
     const linterRef = useRef<Linter | null>(null);
+    const { developerMode } = useGlobalStore();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -71,15 +79,24 @@ const UpdateWorkflow = ({ defaultBpmnXml, title, updateWorkflowMutation, closeDi
                 type: 'cloud'
             });
 
-            // Create new modeler instance
+            // Create new modeler instance with properties panel only if developer mode is enabled
+            const additionalModules = [lintingModule];
+            
+            // Only add properties panel modules if developer mode is enabled
+            if (developerMode) {
+                additionalModules.push(
+                    BpmnPropertiesPanelModule,
+                    BpmnPropertiesProviderModule,
+                    CamundaPlatformPropertiesProviderModule
+                );
+            }
+            
             modeler = new BpmnModeler({
                 container: containerRef.current,
-                propertiesPanel: {
+                propertiesPanel: developerMode ? {
                     parent: propertiesPanelRef.current,
-                },
-                additionalModules: [
-                    lintingModule
-                ],
+                } : undefined,
+                additionalModules,
                 moddleExtensions: {
                     camunda: camundaModdle,
                 },
@@ -132,34 +149,70 @@ const UpdateWorkflow = ({ defaultBpmnXml, title, updateWorkflowMutation, closeDi
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-white">
-            <div ref={containerRef} className="h-full w-full overflow-hidden" style={{ minHeight: "500px" }} />
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)}>
-                    <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                            <>
-                                <FormItem className="flex flex-row gap-5 w-full justify-center items-end">
-                                    <div className="w-full flex flex-col gap-2">
-                                        <FormLabel>Workflow Title</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter workflow title"  {...field} />
-                                        </FormControl>
-                                    </div>
-                                    <Button type="submit">Update Workflow</Button>
-
-                                </FormItem>
-                                <FormMessage />
-                            </>
-                        )}
+        <Card className="flex flex-col h-full w-full bg-white border-none shadow-none">
+            <CardContent className="p-0">
+                <div className="flex flex-row h-full">
+                    {/* Main BPMN modeler container */}
+                    <div 
+                        ref={containerRef} 
+                        className="h-full flex-grow overflow-hidden" 
+                        style={{ minHeight: "500px" }} 
                     />
-
-                </form>
-            </Form>
-
-        </div>
+                    
+                    {/* Properties panel - only rendered when developer mode is enabled */}
+                    {developerMode && (
+                        <div
+                            ref={propertiesPanelRef}
+                            className="border-l border-gray-200 overflow-y-auto w-1/4 max-w-xs"
+                        />
+                    )}
+                </div>
+                
+                {/* Form controls at the bottom */}
+                <div className="mt-4 border-t border-gray-200 pt-4">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleSubmit)}>
+                            <FormField
+                                control={form.control}
+                                name="title"
+                                render={({ field }) => (
+                                    <>
+                                        <FormItem className="flex flex-col space-y-2 mb-4">
+                                            <FormLabel>Workflow Title</FormLabel>
+                                            <FormControl>
+                                                <Input 
+                                                    placeholder="Enter workflow title" 
+                                                    className="w-full" 
+                                                    {...field} 
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    </>
+                                )}
+                            />
+                            
+                            <DialogFooter className="mt-4">
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={closeDialog}
+                                    className="mr-2"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    type="submit" 
+                                    disabled={updateWorkflowMutation.isPending}
+                                >
+                                    {updateWorkflowMutation.isPending ? "Updating..." : "Update Workflow"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </div>
+            </CardContent>
+        </Card>
     );
 };
 

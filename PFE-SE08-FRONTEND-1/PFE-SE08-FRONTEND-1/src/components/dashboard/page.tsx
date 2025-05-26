@@ -237,389 +237,343 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col md:flex">
-      <div className="flex-1 space-y-6 p-8 pt-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Dashboard</h2>
-            <p className="text-muted-foreground flex items-center">
-              <span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-              Welcome back, <span className="font-medium text-gray-800 ml-1">{username || 'User'}</span>!
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
-            <CalendarDateRangePicker onDateRangeChange={handleDateRangeChange} />
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="relative hover:bg-blue-50 hover:text-blue-600 transition-colors duration-300">
-                <Bell className="h-4 w-4" />
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">3</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
+      {/* Modern Background Pattern */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-full opacity-30">
+          <div className="absolute top-20 right-20 w-72 h-72 bg-gradient-to-br from-blue-200/40 to-indigo-200/40 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 left-20 w-96 h-96 bg-gradient-to-tr from-purple-200/30 to-pink-200/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-cyan-200/20 to-blue-200/20 rounded-full blur-2xl animate-pulse delay-2000"></div>
+        </div>
+      </div>
+
+      <div className="relative z-10 p-6 space-y-8">
+        {/* Redesigned Header */}
+        <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Left Section - Welcome */}
+            <div className="flex items-center space-x-6">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <BarChart className="h-8 w-8 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full border-4 border-white animate-pulse"></div>
+              </div>
+              <div>
+                <h1 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+                  Welcome back, {username || 'User'}!
+                </h1>
+                <p className="text-gray-600 font-medium mt-1">Here's what's happening with your workflows today</p>
+                <div className="flex items-center mt-2 space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-green-600 font-semibold">All Systems Operational</span>
+                  </div>
+                  <div className="text-sm text-gray-500">Last updated: {new Date().toLocaleTimeString()}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Section - Quick Actions */}
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/30 shadow-lg p-1">
+                <CalendarDateRangePicker onDateRangeChange={handleDateRangeChange} />
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative w-12 h-12 bg-white/70 backdrop-blur-sm border-white/30 hover:bg-white hover:shadow-xl transition-all duration-300 group rounded-2xl"
+              >
+                <Bell className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-[10px] font-bold text-white shadow-lg animate-bounce">
+                  3
+                </span>
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/10 rounded-lg"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <CardTitle className="text-sm font-medium">
-                Active Processes
-              </CardTitle>
-              <div className="p-1.5 rounded-full bg-blue-100 text-blue-600 group-hover:bg-blue-200 transition-colors duration-300">
-                <Layers className="h-4 w-4" />
+        {/* Redesigned Statistics Grid */}
+        <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2">
+          {/* Process Card */}
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden group-hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-400/30 to-transparent rounded-full blur-xl"></div>
+
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                    <Layers className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-black text-gray-800 mb-1">{processCount}</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Processes</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Active</span>
+                    <span className="text-sm font-bold text-blue-600">18</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <ArrowUpRight className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-semibold text-green-600">+12% this month</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Workflow Card */}
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden group-hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-400/30 to-transparent rounded-full blur-xl"></div>
+
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                    <Workflow className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-black text-gray-800 mb-1">{workflowCount}</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Workflows</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Deployed</span>
+                    <span className="text-sm font-bold text-indigo-600">15</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full" style={{ width: '83%' }}></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <ArrowUpRight className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-semibold text-green-600">+5% this month</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tasks Card */}
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden group-hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-green-400/30 to-transparent rounded-full blur-xl"></div>
+
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                    <FileCheck2 className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-black text-gray-800 mb-1">{taskCount}</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tasks</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Pending</span>
+                    <span className="text-sm font-bold text-green-600">28</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full" style={{ width: '67%' }}></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <ArrowUpRight className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-semibold text-green-600">+18% this month</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Forms Card */}
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden group-hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-400/30 to-transparent rounded-full blur-xl"></div>
+
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                    <FileText className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-black text-gray-800 mb-1">{formCount}</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Forms</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Templates</span>
+                    <span className="text-sm font-bold text-purple-600">12</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-purple-500 to-pink-600 h-2 rounded-full" style={{ width: '80%' }}></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <ArrowUpRight className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-semibold text-green-600">+7% this month</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Redesigned Main Content Area */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Left Column - Main Chart */}
+          <div className="lg:col-span-2">
+            <Card className="bg-white/60 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <CardHeader className="p-8 pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+                      <BarChart className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl font-bold text-gray-800">Process Analytics</CardTitle>
+                      <CardDescription className="text-gray-600 font-medium mt-1">
+                        {selectedDateRange?.from && selectedDateRange?.to ? (
+                          <>
+                            {format(selectedDateRange.from, "MMM dd, yyyy")} - {format(selectedDateRange.to, "MMM dd, yyyy")}
+                          </>
+                        ) : (
+                          "Real-time workflow performance metrics"
+                        )}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-semibold text-green-600">Live Data</span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8 pt-0">
+                <Overview />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Quick Stats */}
+          <div className="space-y-6">
+            {/* Process Completion */}
+            <Card className="bg-white/60 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <CardHeader className="p-6 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                    <Activity className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-gray-800">Completion Rate</CardTitle>
+                    <CardDescription className="text-gray-600 text-sm">Process success metrics</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <ProcessCompletionStats />
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="bg-white/60 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <CardHeader className="p-6 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-lg">
+                    <PlusCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-gray-800">Quick Actions</CardTitle>
+                    <CardDescription className="text-gray-600 text-sm">Common workflow tasks</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0 space-y-3">
+                <Button className="w-full justify-start bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg rounded-xl">
+                  <Layers className="mr-3 h-4 w-4" />
+                  Create Process
+                </Button>
+                <Button className="w-full justify-start bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg rounded-xl">
+                  <Workflow className="mr-3 h-4 w-4" />
+                  Deploy Workflow
+                </Button>
+                <Button className="w-full justify-start bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg rounded-xl">
+                  <FileText className="mr-3 h-4 w-4" />
+                  New Form
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Bottom Section - Recent Activity */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Recent Tasks */}
+          <Card className="bg-white/60 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
+            <CardHeader className="p-6 pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                    <Clock className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-gray-800">Recent Tasks</CardTitle>
+                    <CardDescription className="text-gray-600">Your latest assignments</CardDescription>
+                  </div>
+                </div>
+                <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-semibold">
+                  {taskCount} active
+                </Badge>
               </div>
             </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl font-bold text-blue-700">{processCount}</div>
-              <div className="flex items-center pt-1">
-                <div className="flex items-center bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full text-xs">
-                  <ArrowUpRight className="mr-1 h-3 w-3" />
-                  <span className="font-medium">+12%</span>
-                </div>
-                <span className="text-xs text-muted-foreground ml-2">from last period</span>
-              </div>
+            <CardContent className="p-0">
+              <RecentTasks />
             </CardContent>
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 px-6 py-2 group-hover:from-blue-100 group-hover:to-blue-200/50 transition-colors duration-300">
-              <div className="text-xs font-medium flex items-center text-blue-700">
-                <ArrowRight className="mr-1 h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
-                <span>View details</span>
-              </div>
+            <div className="p-6 border-t border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-gray-100/30">
+              <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg rounded-xl">
+                <Clock className="mr-2 h-4 w-4" />
+                View All Tasks
+              </Button>
             </div>
           </Card>
 
-          <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-indigo-600/10 rounded-lg"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <CardTitle className="text-sm font-medium">
-                Deployed Workflows
-              </CardTitle>
-              <div className="p-1.5 rounded-full bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200 transition-colors duration-300">
-                <Workflow className="h-4 w-4" />
+          {/* Recent Notifications */}
+          <Card className="bg-white/60 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
+            <CardHeader className="p-6 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+                  <Bell className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-gray-800">Activity Feed</CardTitle>
+                  <CardDescription className="text-gray-600">Latest system updates</CardDescription>
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl font-bold text-indigo-700">{workflowCount}</div>
-              <div className="flex items-center pt-1">
-                <div className="flex items-center bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full text-xs">
-                  <ArrowUpRight className="mr-1 h-3 w-3" />
-                  <span className="font-medium">+5%</span>
-                </div>
-                <span className="text-xs text-muted-foreground ml-2">from last period</span>
-              </div>
+            <CardContent className="p-0">
+              <RecentNotifications />
             </CardContent>
-            <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 px-6 py-2 group-hover:from-indigo-100 group-hover:to-indigo-200/50 transition-colors duration-300">
-              <div className="text-xs font-medium flex items-center text-indigo-700">
-                <ArrowRight className="mr-1 h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
-                <span>View details</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-green-600/10 rounded-lg"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
-              <div className="p-1.5 rounded-full bg-green-100 text-green-600 group-hover:bg-green-200 transition-colors duration-300">
-                <FileCheck2 className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl font-bold text-green-700">{taskCount}</div>
-              <div className="flex items-center pt-1">
-                <div className="flex items-center bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full text-xs">
-                  <ArrowUpRight className="mr-1 h-3 w-3" />
-                  <span className="font-medium">+18%</span>
-                </div>
-                <span className="text-xs text-muted-foreground ml-2">from last period</span>
-              </div>
-            </CardContent>
-            <div className="bg-gradient-to-r from-green-50 to-green-100/50 px-6 py-2 group-hover:from-green-100 group-hover:to-green-200/50 transition-colors duration-300">
-              <div className="text-xs font-medium flex items-center text-green-700">
-                <ArrowRight className="mr-1 h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
-                <span>View details</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-purple-600/10 rounded-lg"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <CardTitle className="text-sm font-medium">
-                Form Templates
-              </CardTitle>
-              <div className="p-1.5 rounded-full bg-purple-100 text-purple-600 group-hover:bg-purple-200 transition-colors duration-300">
-                <FileText className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl font-bold text-purple-700">{formCount}</div>
-              <div className="flex items-center pt-1">
-                <div className="flex items-center bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full text-xs">
-                  <ArrowUpRight className="mr-1 h-3 w-3" />
-                  <span className="font-medium">+7%</span>
-                </div>
-                <span className="text-xs text-muted-foreground ml-2">from last period</span>
-              </div>
-            </CardContent>
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100/50 px-6 py-2 group-hover:from-purple-100 group-hover:to-purple-200/50 transition-colors duration-300">
-              <div className="text-xs font-medium flex items-center text-purple-700">
-                <ArrowRight className="mr-1 h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
-                <span>View details</span>
-              </div>
+            <div className="p-6 border-t border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-gray-100/30">
+              <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg rounded-xl">
+                <Bell className="mr-2 h-4 w-4" />
+                View All Notifications
+              </Button>
             </div>
           </Card>
         </div>
-
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto bg-white border shadow-sm rounded-xl p-1">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300">
-              <BarChart className="h-4 w-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="processes" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300">
-              <Layers className="h-4 w-4 mr-2" />
-              Processes
-            </TabsTrigger>
-            <TabsTrigger value="workflows" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300">
-              <Workflow className="h-4 w-4 mr-2" />
-              Workflows
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300">
-              <FileCheck2 className="h-4 w-4 mr-2" />
-              Tasks
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="col-span-2">
-                <CardHeader>
-                  <CardTitle>Process Execution Metrics</CardTitle>
-                  <CardDescription>
-                    {selectedDateRange?.from && selectedDateRange?.to ? (
-                      <>
-                        {format(selectedDateRange.from, "MMM dd, yyyy")} - {format(selectedDateRange.to, "MMM dd, yyyy")}
-                      </>
-                    ) : (
-                      "Monthly process execution statistics"
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pl-2">
-                  <Overview />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Process Completion</CardTitle>
-                  <CardDescription>
-                    Distribution of process statuses
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ProcessCompletionStats />
-                </CardContent>
-                <CardFooter className="border-t px-6 py-3">
-                  <Button variant="ghost" className="w-full justify-center">
-                    <BarChart className="mr-2 h-4 w-4" />
-                    View detailed report
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Recent Tasks</CardTitle>
-                    <Badge variant="outline" className="text-xs font-normal">
-                      {taskCount} total
-                    </Badge>
-                  </div>
-                  <CardDescription>
-                    Your assigned tasks
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <RecentTasks />
-                </CardContent>
-                <CardFooter className="border-t px-6 py-3">
-                  <Button variant="ghost" className="w-full justify-center">
-                    <Clock className="mr-2 h-4 w-4" />
-                    View all tasks
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card className="col-span-1 lg:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle>Recent Notifications</CardTitle>
-                  <CardDescription>
-                    Latest updates and alerts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <RecentNotifications />
-                </CardContent>
-                <CardFooter className="border-t px-6 py-3">
-                  <Button variant="ghost" className="w-full justify-center">
-                    <Bell className="mr-2 h-4 w-4" />
-                    View all notifications
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="processes" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="border-0 shadow-md overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/10 rounded-lg"></div>
-                <CardHeader className="relative z-10">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Process Management</CardTitle>
-                    <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                      <Layers className="h-5 w-5" />
-                    </div>
-                  </div>
-                  <CardDescription>
-                    View and manage your BPMN processes
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-blue-100 bg-blue-50/50 hover:bg-blue-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-white shadow-sm">
-                          <Activity className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">Invoice Approval</h4>
-                          <p className="text-xs text-muted-foreground">Last updated 2 days ago</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-blue-100 bg-blue-50/50 hover:bg-blue-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-white shadow-sm">
-                          <Activity className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">Customer Onboarding</h4>
-                          <p className="text-xs text-muted-foreground">Last updated 5 days ago</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-blue-100 bg-blue-50/50 hover:bg-blue-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-white shadow-sm">
-                          <Activity className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">Expense Reimbursement</h4>
-                          <p className="text-xs text-muted-foreground">Last updated 1 week ago</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Draft</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="relative z-10 border-t p-4 bg-gradient-to-r from-blue-50 to-blue-100/50">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white">
-                    <Activity className="mr-2 h-4 w-4" />
-                    View All Processes
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="border-0 shadow-md overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-indigo-600/10 rounded-lg"></div>
-                <CardHeader className="relative z-10">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Create New Process</CardTitle>
-                    <div className="p-2 rounded-full bg-indigo-100 text-indigo-600">
-                      <PlusCircle className="h-5 w-5" />
-                    </div>
-                  </div>
-                  <CardDescription>
-                    Start building a new BPMN process
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <div className="rounded-lg border-2 border-dashed border-indigo-200 p-8 flex flex-col items-center justify-center h-[220px] bg-indigo-50/50">
-                    <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-                      <Layers className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-lg font-medium text-indigo-700">Create a New Process</h3>
-                    <p className="text-sm text-muted-foreground text-center mt-2 max-w-xs">
-                      Design and deploy new BPMN processes to automate your business workflows
-                    </p>
-                  </div>
-                </CardContent>
-                <div className="relative z-10 border-t p-4 bg-gradient-to-r from-indigo-50 to-indigo-100/50">
-                  <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create New Process
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="workflows" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Workflow Management</CardTitle>
-                <CardDescription>
-                  View and manage your deployed workflows
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border p-4 flex items-center justify-center h-[300px]">
-                  <div className="text-center space-y-3">
-                    <Workflow className="h-10 w-10 text-muted-foreground mx-auto" />
-                    <h3 className="text-lg font-medium">Workflow Management</h3>
-                    <p className="text-sm text-muted-foreground max-w-md">Access all your workflows, deploy new ones, or modify existing workflows.</p>
-                    <Button className="mt-2">
-                      <Workflow className="mr-2 h-4 w-4" />
-                      View All Workflows
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="tasks" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Task Management</CardTitle>
-                <CardDescription>
-                  View and complete your assigned tasks
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border p-4 flex items-center justify-center h-[300px]">
-                  <div className="text-center space-y-3">
-                    <FileCheck2 className="h-10 w-10 text-muted-foreground mx-auto" />
-                    <h3 className="text-lg font-medium">Task Management</h3>
-                    <p className="text-sm text-muted-foreground max-w-md">Access all your tasks, complete pending tasks, or view task history.</p>
-                    <Button className="mt-2">
-                      <Clock className="mr-2 h-4 w-4" />
-                      View All Tasks
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );

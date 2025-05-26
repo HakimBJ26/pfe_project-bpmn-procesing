@@ -4,7 +4,7 @@ import axios from "axios";
 // API Gateway URL pour les services d'authentification
 const gatewayBaseURL = import.meta.env.VITE_API_GATEWAY_URL || "http://localhost:8080";
 // Camunda API URL pour les services Camunda
-const camundaBaseURL = import.meta.env.VITE_CAMUNDA_API_URL || "http://localhost:8081";
+const camundaBaseURL = import.meta.env.VITE_CAMUNDA_API_URL || "http://localhost:8998";
 
 // Instance axios pour les appels à l'API Gateway (auth, user, etc.)
 export const axiosInstance = axios.create({
